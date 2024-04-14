@@ -1,12 +1,14 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import * as dat from 'dat.gui';
 import { planetDistances } from './constants.js';
-import { sizeRelativeToSun } from './constants.js';
+import { celestialSize } from './constants.js';
 import { orbitSpeed } from './constants.js';
 import { rotationalSpeed } from './constants.js';
 import { saturnRingSize } from './constants.js';
 import { uranusRingSize } from './constants.js';
+import { celestialDescriptions } from './constants.js';
+
+import { vertexShader, fragmentShader } from './shaders.js';
 
 import starsTexture from '../img/stars.jpg';
 import sunTexture from '../img/sun.jpg';
@@ -21,6 +23,20 @@ import uranusTexture from '../img/uranus.jpg';
 import uranusRingTexture from '../img/uranus ring.png';
 import neptuneTexture from '../img/neptune.jpg';
 import plutoTexture from '../img/pluto.jpg';
+import spaceTexture from '../img/space.jpg';
+
+/*document.getElementById('splash-screen').style.display = 'block';
+
+// Hide the splash screen after 3 seconds
+setTimeout(function() {
+    // Apply fade-out animation
+    document.getElementById('splash-screen').classList.add('fade-out');
+    
+    // Hide the splash screen after the animation ends
+    setTimeout(function() {
+        document.getElementById('splash-screen').style.display = 'none';
+    }, 500); // Adjust this timeout to match the duration of your CSS animation
+}, 1500);*/
 
 const renderer = new THREE.WebGLRenderer();
 
@@ -38,49 +54,117 @@ const camera = new THREE.PerspectiveCamera(
 );
 
 const orbit = new OrbitControls(camera, renderer.domElement);
-//orbit.enablePan = false;
+orbit.minDistance = 50;
+orbit.maxDistance = 500;
 
-camera.position.set(-200, 140, 140);
+camera.position.set(-70, 100, 100);
 orbit.update();
 
 const ambientLight = new THREE.AmbientLight(0x333333);
 scene.add(ambientLight);
 
+const pointLight = new THREE.PointLight(0xFFFFFF, 1, 400);
+scene.add(pointLight);
+
 const cubeTextureLoader = new THREE.CubeTextureLoader();
 scene.background = cubeTextureLoader.load([
-    starsTexture,
-    starsTexture,
-    starsTexture,
-    starsTexture,
-    starsTexture,
-    starsTexture
+    spaceTexture,
+    spaceTexture,
+    spaceTexture,
+    spaceTexture,
+    spaceTexture,
+    spaceTexture
 ]);
+scene.backgroundBlurriness = 0.2;
+scene.backgroundIntensity = 0.05;
 
 const textureLoader = new THREE.TextureLoader();
 
-// Accurate sizeProp: 0.696, distanceProp: 149.6
-const sizeProportion = 0.696;
-const distanceProportion = 149.6;
 const orbitSpeedVal = 0.00000001;
-const rotationalSpeedVal = 0.0000001;
+let rotationalSpeedVal = 0.000001;
+let planetSelected = false;
 
-//const sunGeo = new THREE.SphereGeometry(sizeRelativeToSun.Sun * sizeProportion, 30, 30);
-const sunGeo = new THREE.SphereGeometry(5, 40, 40);
-const sunMat = new THREE.MeshBasicMaterial({
-    map: textureLoader.load(sunTexture)
+
+//FLOATING PARTICLES
+
+const particleCount = 3000;
+const boxSize = 1000;
+const particleGeometry = new THREE.BufferGeometry();
+const particlePositions = new Float32Array(particleCount * 3);
+for (let i = 0; i < particleCount; i++) {
+    const x = Math.random() * boxSize - boxSize / 2;
+    const y = Math.random() * boxSize - boxSize / 2;
+    const z = Math.random() * boxSize - boxSize / 2;
+
+    particlePositions[i * 3] = x;
+    particlePositions[i * 3 + 1] = y;
+    particlePositions[i * 3 + 2] = z;
+}
+
+particleGeometry.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
+const particleMaterial = new THREE.PointsMaterial({
+    size: 1,
+    color: 0xffffff,
 });
-const sun = new THREE.Mesh(sunGeo, sunMat);
+const particles = new THREE.Points(particleGeometry, particleMaterial);
+
+scene.add(particles);
+
+function animateParticles() {
+    const particlePositions = particleGeometry.attributes.position.array;
+    const speed = 0.05;
+    for (let i = 0; i < particlePositions.length; i += 3) {
+        const offsetX = (Math.random() - 0.5) * speed;
+        const offsetY = (Math.random() - 0.5) * speed;
+        const offsetZ = (Math.random() - 0.5) * speed;
+        particlePositions[i] += offsetX;
+        particlePositions[i + 1] += offsetY;
+        particlePositions[i + 2] += offsetZ;
+    }
+    particleGeometry.attributes.position.needsUpdate = true;
+}
+
+
+//PLANET CREATION
+
+const sunTex = textureLoader.load(sunTexture);
+sunTex.wrapS = THREE.RepeatWrapping;
+sunTex.wrapT = THREE.RepeatWrapping;
+
+const uniforms = {
+    u_resolution: { type: 'v2', value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
+    u_time: { type: 'f', value: 0.0 },
+    colorMap: { type: 't', value: sunTex }
+  };
+  
+  const mat = new THREE.ShaderMaterial({
+    uniforms,
+    vertexShader: vertexShader,
+    fragmentShader: fragmentShader
+  });
+
+const sunGeo = new THREE.IcosahedronGeometry(15,30);
+const sun = new THREE.Mesh(sunGeo, mat);
 scene.add(sun);
 
-function createPlanete(size, texture, position, ring) {
-    const geo = new THREE.SphereGeometry(size, 40, 40);
-    const mat = new THREE.MeshStandardMaterial({
-        map: textureLoader.load(texture)
+function createPlanet(size, texture, position, ring) {
+    const planetTexture = textureLoader.load(texture);
+    const uniforms = {
+        u_resolution: { type: 'v2', value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
+        u_time: { type: 'f', value: 0.0 },
+        colorMap: { type: 't', value: planetTexture }
+    };
+  
+    const mat = new THREE.ShaderMaterial({
+        uniforms,
+        vertexShader: vertexShader,
+        fragmentShader: fragmentShader
     });
+    const geo = new THREE.IcosahedronGeometry(size,30);
     const mesh = new THREE.Mesh(geo, mat);
     const obj = new THREE.Object3D();
     obj.add(mesh);
-    let ringMesh; // Declare ringMesh variable
+    let ringMesh;
     if(ring) {
         const ringGeo = new THREE.RingGeometry(
             ring.innerRadius,
@@ -90,42 +174,43 @@ function createPlanete(size, texture, position, ring) {
             map: textureLoader.load(ring.texture),
             side: THREE.DoubleSide
         });
-        ringMesh = new THREE.Mesh(ringGeo, ringMat); // Assign ringMesh
+        ringMesh = new THREE.Mesh(ringGeo, ringMat);
         obj.add(ringMesh);
         ringMesh.position.x = position;
         ringMesh.rotation.x = -0.5 * Math.PI;
     }
     scene.add(obj);
     mesh.position.x = position;
-    return { mesh, obj, ringMesh }; // Include ringMesh in the returned object
+    return { mesh, obj, ringMesh, };
 }
 
-const mercury = createPlanete(sizeRelativeToSun.Mercury * sizeProportion, mercuryTexture, planetDistances.Mercury * distanceProportion);
-const venus = createPlanete(sizeRelativeToSun.Venus * sizeProportion, venusTexture, planetDistances.Venus * distanceProportion);
-const earth = createPlanete(sizeRelativeToSun.Earth * sizeProportion, earthTexture, planetDistances.Earth * distanceProportion);
-const mars = createPlanete(sizeRelativeToSun.Mars * sizeProportion, marsTexture, planetDistances.Mars * distanceProportion);
-const jupiter = createPlanete(sizeRelativeToSun.Jupiter * sizeProportion, jupiterTexture, planetDistances.Jupiter * distanceProportion);
-const saturn = createPlanete(sizeRelativeToSun.Saturn * sizeProportion, saturnTexture, planetDistances.Saturn * distanceProportion, {
-    innerRadius: (saturnRingSize.innerRadius * sizeProportion),
-    outerRadius: (saturnRingSize.outerRadius * sizeProportion),
+const mercury = createPlanet(celestialSize.Mercury, mercuryTexture, planetDistances.Mercury);
+const venus = createPlanet(celestialSize.Venus, venusTexture, planetDistances.Venus);
+const earth = createPlanet(celestialSize.Earth, earthTexture, planetDistances.Earth);
+const mars = createPlanet(celestialSize.Mars, marsTexture, planetDistances.Mars);
+const jupiter = createPlanet(celestialSize.Jupiter, jupiterTexture, planetDistances.Jupiter);
+const saturn = createPlanet(celestialSize.Saturn, saturnTexture, planetDistances.Saturn, {
+    innerRadius: (saturnRingSize.innerRadius),
+    outerRadius: (saturnRingSize.outerRadius),
     texture: saturnRingTexture
 });
 
 const saturnRing = saturn.ringMesh;
 
-const uranus = createPlanete(sizeRelativeToSun.Uranus * sizeProportion, uranusTexture, planetDistances.Uranus * distanceProportion, {
-    innerRadius: (uranusRingSize.innerRadius * sizeProportion),
-    outerRadius: (uranusRingSize.outerRadius * sizeProportion),
+const uranus = createPlanet(celestialSize.Uranus, uranusTexture, planetDistances.Uranus, {
+    innerRadius: (uranusRingSize.innerRadius),
+    outerRadius: (uranusRingSize.outerRadius),
     texture: uranusRingTexture
 });
 
 const uranusRing = uranus.ringMesh;
 
-const neptune = createPlanete(sizeRelativeToSun.Neptune * sizeProportion, neptuneTexture, planetDistances.Neptune * distanceProportion);
-const pluto = createPlanete(sizeRelativeToSun.Pluto * sizeProportion, plutoTexture, planetDistances.Pluto * distanceProportion);
+const neptune = createPlanet(celestialSize.Neptune, neptuneTexture, planetDistances.Neptune);
+const pluto = createPlanet(celestialSize.Pluto, plutoTexture, planetDistances.Pluto);
 
 const celestialMesh = [sun, mercury.mesh, venus.mesh, earth.mesh, mars.mesh, jupiter.mesh, saturn.mesh, uranus.mesh, neptune.mesh, pluto.mesh];
 const planetMesh = [mercury.mesh, venus.mesh, earth.mesh, mars.mesh, jupiter.mesh, saturn.mesh, uranus.mesh, neptune.mesh, pluto.mesh];
+const planets = [mercury, venus, earth, mars, jupiter, saturn, uranus, neptune, pluto];
 
 sun.name = 'Sun';
 mercury.mesh.name = 'Mercury';
@@ -141,11 +226,13 @@ neptune.mesh.name = 'Neptune';
 pluto.mesh.name = 'Pluto';
 
 
+//ORBIT CREATION
+
 function createOrbit(size, color){
     const obj = new THREE.Object3D();
     scene.add(obj);
     const ringGeo = new THREE.RingGeometry(
-        size - 0.4,
+        size - 0.2,
         size,
         1000);
     const ringMat = new THREE.MeshBasicMaterial({
@@ -158,18 +245,20 @@ function createOrbit(size, color){
     return {ringMesh, obj};
 }
 
-const mercruyOrbit = createOrbit(planetDistances.Mercury  * distanceProportion, 0xffffff);
-const venusOrbit = createOrbit(planetDistances.Venus  * distanceProportion, 0x0000ff);
-const earthOrbit = createOrbit(planetDistances.Earth  * distanceProportion, 0xff0000);
-const marsOrbit = createOrbit(planetDistances.Mars  * distanceProportion, 0x00ffff);
-const jupiterOrbit = createOrbit(planetDistances.Jupiter  * distanceProportion, 0xffd700);
-const saturnOrbit = createOrbit(planetDistances.Saturn  * distanceProportion, 0x4b0082);
-const uranusOrbit = createOrbit(planetDistances.Uranus  * distanceProportion, 0xffffff);
-const neptuneOrbit = createOrbit(planetDistances.Neptune  * distanceProportion, 0x0000ff);
-const plutoOrbit = createOrbit(planetDistances.Pluto  * distanceProportion, 0xff0000);
+const mercruyOrbit = createOrbit(planetDistances.Mercury, 0xffffff);
+const venusOrbit = createOrbit(planetDistances.Venus, 0xffffff);
+const earthOrbit = createOrbit(planetDistances.Earth, 0xffffff);
+const marsOrbit = createOrbit(planetDistances.Mars, 0xffffff);
+const jupiterOrbit = createOrbit(planetDistances.Jupiter, 0xffffff);
+const saturnOrbit = createOrbit(planetDistances.Saturn, 0xffffff);
+const uranusOrbit = createOrbit(planetDistances.Uranus, 0xffffff);
+const neptuneOrbit = createOrbit(planetDistances.Neptune, 0xffffff);
+const plutoOrbit = createOrbit(planetDistances.Pluto, 0xffffff);
 
-const pointLight = new THREE.PointLight(0xFFFFFF, 1, sizeProportion * planetDistances.Pluto * distanceProportion * 10);
-scene.add(pointLight);
+const orbits = [mercruyOrbit.ringMesh, venusOrbit.ringMesh, earthOrbit.ringMesh, marsOrbit.ringMesh, jupiterOrbit.ringMesh, saturnOrbit.ringMesh, uranusOrbit.ringMesh, neptuneOrbit.ringMesh, plutoOrbit.ringMesh];
+
+
+//SCENE HELPERS
 
 const mousePosition = new THREE.Vector2();
 
@@ -180,183 +269,170 @@ window.addEventListener('mousemove', function(e){
 
 const rayCaster = new THREE.Raycaster();
 
-function scale(object){
+function bounce(object){
     object.scale.x += 0.01;
     object.scale.y += 0.01;
     object.scale.z += 0.01;
+    object.position.y += 0.2;
 }
 
-function descale(object){
+function debounce(object){
     object.scale.x -= 0.01;
     object.scale.y -= 0.01;
     object.scale.z -= 0.01;
+    object.position.y -= 0.2;
 }
 
-function resetScale(object) {
-    if (object.scale.x < 1.01 || object.scale.y < 1.01 || object.scale.z < 1.01) {
+function resetHighlight(object) {
+    if (object.scale.x < 1.01 || object.scale.y < 1.01 || object.scale.z < 1.01 || object.position.y < 0) {
         return;
     }
-    descale(object);
+    debounce(object);
 }
 
 function highLight(object) {
-    document.body.style.cursor = "pointer";
-    if (object.scale.x > 1.15 || object.scale.y > 1.15 || object.scale.z > 1.15) {
+    if (planetSelected){
         return;
     }
-    scale(object)
+    if (orbits.includes(object) || object == particles){
+        return;
+    }
+    if (object.scale.x > 1.15 || object.scale.y > 1.15 || object.scale.z > 1.15 || object.position.y > 3) {
+        return;
+    }
+    document.body.style.cursor = "pointer";
+    bounce(object)
 }
 
-function displayDescription(planetName) {
-    // Example implementation to display description of the clicked planet
-    const descriptionElement = document.getElementById('description');
-    descriptionElement.innerHTML = `Description of ${planetName}`;
-}
-
-function resetCamera() {
-    // Reset camera to original position
-    camera.position.set(-90, 140, 140);
-    camera.lookAt(scene.position);
-}
-
-function resetDescription() {
-    // Clear description
-    const descriptionElement = document.getElementById('description');
-    descriptionElement.innerHTML = '';
-}
-
-const gui = new dat.GUI();
-
-const options = {
-    orbitSpeed: 1,
-    rotationalSpeed: 1,
-    sunSize: 1,
-    planetSize: 1
-};
-
-gui.add(options, 'orbitSpeed', 0, 100);
-gui.add(options, 'rotationalSpeed', 0, 100);
-gui.add(options, 'sunSize', 0, 100);
-gui.add(options, 'planetSize', 0, 10000);
-
+let selectedCelestial;
 
 document.addEventListener('click', onClick, false);
-
-const planetCameraMap = {};
-planetMesh.forEach(planet => {
-    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.set(planet.x + 10, planet.y + 5, planet.z + 10); // Adjust position as needed
-    camera.lookAt(planet.position); // Make camera look at the center of the planet
-    planetCameraMap[planet.name] = camera;
-    camera.name = planet.name + 'camera';
-    //console.log(planet.name);
-});
-
-// Add controls for each camera
-const controls = [];
-Object.values(planetCameraMap).forEach(camera => {
-    const control = new OrbitControls(camera, renderer.domElement);
-    control.enableZoom = true;
-    control.enablePan = true;
-    controls.push(control);
-    //console.log(camera.name);
-});
-
-// Function to switch between cameras
-function switchCamera(planetName) {
-    const camera = planetCameraMap[planetName];
-    console.log(camera);
-    if (camera) {
-        renderer.render(scene, camera);
-    }
-}
-
-switchCamera('Earth');
-
-let selectedCelestial = null;
-let selectedCelestialForCamera = jupiter;
 
 function onClick(event) {
     if (selectedCelestial) {
         rayCaster.setFromCamera(mousePosition, camera);
         const intersects = rayCaster.intersectObject(selectedCelestial);
-        if (intersects.length > 0) {
+        if (intersects.length > 0 && !targetPlanet) {
             handleCelestialClick(selectedCelestial);
         }
         selectedCelestial = null;
     }
 }
 
+let targetPlanet;
+
 function handleCelestialClick(celestial) {
-    // Perform the desired action for the clicked planet
     console.log("Clicked on planet:", celestial.name);
-    selectedCelestialForCamera = celestial;
-    console.log("cameraplanet:", selectedCelestialForCamera.name);
-    switchCamera(selectedCelestialForCamera.name);
-    // Perform additional actions as needed...
+    planetSelected = true;
+    if (targetPlanet) {
+        targetPlanet.remove(camera);
+    }
+    targetPlanet = celestial;
+
+    celestial.add(camera);
+    const celestialName = celestial.name
+    camera.position.set(celestialSize[celestialName] + 30, 30, 0); 
+    camera.lookAt(celestial.position);
+    orbit.target = celestial;
+
+    rotationalSpeedVal = 0;
+
+    const infoBox = document.createElement('div');
+    infoBox.id = 'info-box';
+    infoBox.innerHTML = `<p>${celestialDescriptions[celestial.name]}</p>`;
+    
+    const resetButton = document.createElement('button');
+    resetButton.id = 'reset-view';
+    resetButton.textContent = 'Back';
+    resetButton.addEventListener('click', resetView);
+
+    document.body.appendChild(infoBox);
+    document.body.appendChild(resetButton);
 }
 
+function resetView() {
+    planetSelected = false;
+    const infoBox = document.getElementById('info-box');
+    const resetButton = document.querySelector('button');
+    if (infoBox) infoBox.remove();
+    if (resetButton) resetButton.remove();
+
+    rotationalSpeedVal = 0.000001;
+    if (targetPlanet) {
+        targetPlanet.remove(camera);
+        targetPlanet = null;
+    }
+    camera.position.set(-100, 70, 40);
+    camera.lookAt(scene.position);
+    orbit.target = new THREE.Vector3(0, 0, 0);
+}
+
+const clock = new THREE.Clock();
+
+
+//ANIMATE
 
 function animate() {
+    uniforms.u_time.value = clock.getElapsedTime();
+
+    animateParticles();
+
     // Self-rotation
-    sun.rotateY(rotationalSpeed.Sun * rotationalSpeedVal * options.rotationalSpeed);
-    mercury.mesh.rotateY(rotationalSpeed.Mercury * rotationalSpeedVal * options.rotationalSpeed);
-    venus.mesh.rotateY(rotationalSpeed.Venus * rotationalSpeedVal * options.rotationalSpeed);
-    earth.mesh.rotateY(rotationalSpeed.Earth * rotationalSpeedVal * options.rotationalSpeed);
-    mars.mesh.rotateY(rotationalSpeed.Mars * rotationalSpeedVal * options.rotationalSpeed);
-    jupiter.mesh.rotateY(rotationalSpeed.Jupiter * rotationalSpeedVal * options.rotationalSpeed);
-    saturn.mesh.rotateY(rotationalSpeed.Saturn * rotationalSpeedVal * options.rotationalSpeed);
-    uranus.mesh.rotateY(rotationalSpeed.Uranus * rotationalSpeedVal * options.rotationalSpeed);
-    neptune.mesh.rotateY(rotationalSpeed.Neptune * rotationalSpeedVal * options.rotationalSpeed);
-    pluto.mesh.rotateY(rotationalSpeed.Pluto * rotationalSpeedVal * options.rotationalSpeed);
+    sun.rotateY(rotationalSpeed.Sun * rotationalSpeedVal);
+    mercury.mesh.rotateY(rotationalSpeed.Mercury * rotationalSpeedVal);
+    venus.mesh.rotateY(rotationalSpeed.Venus * rotationalSpeedVal);
+    earth.mesh.rotateY(rotationalSpeed.Earth * rotationalSpeedVal);
+    mars.mesh.rotateY(rotationalSpeed.Mars * rotationalSpeedVal);
+    jupiter.mesh.rotateY(rotationalSpeed.Jupiter * rotationalSpeedVal);
+    saturn.mesh.rotateY(rotationalSpeed.Saturn * rotationalSpeedVal);
+    uranus.mesh.rotateY(rotationalSpeed.Uranus * rotationalSpeedVal);
+    neptune.mesh.rotateY(rotationalSpeed.Neptune * rotationalSpeedVal);
+    pluto.mesh.rotateY(rotationalSpeed.Pluto * rotationalSpeedVal);
 
     // Around-sun-rotation
-    mercury.obj.rotateY(orbitSpeed.Mercury * orbitSpeedVal * options.orbitSpeed);
-    venus.obj.rotateY(orbitSpeed.Venus * orbitSpeedVal * options.orbitSpeed);
-    earth.obj.rotateY(orbitSpeed.Earth * orbitSpeedVal * options.orbitSpeed);
-    mars.obj.rotateY(orbitSpeed.Mars * orbitSpeedVal * options.orbitSpeed);
-    jupiter.obj.rotateY(orbitSpeed.Jupiter * orbitSpeedVal * options.orbitSpeed);
-    saturn.obj.rotateY(orbitSpeed.Saturn * orbitSpeedVal * options.orbitSpeed);
-    uranus.obj.rotateY(orbitSpeed.Uranus * orbitSpeedVal * options.orbitSpeed);
-    neptune.obj.rotateY(orbitSpeed.Neptune * orbitSpeedVal * options.orbitSpeed);
-    pluto.obj.rotateY(orbitSpeed.Pluto * orbitSpeedVal * options.orbitSpeed);
-
-    // GUI Scale Change
-    sun.scale.set(options.sunSize, options.sunSize, options.sunSize);
-    planetMesh.forEach(planet => {
-        planet.scale.set(options.planetSize, options.planetSize, options.planetSize);
-    });
-    //TODO: ring scale 
+    mercury.obj.rotateY(orbitSpeed.Mercury * orbitSpeedVal);
+    venus.obj.rotateY(orbitSpeed.Venus * orbitSpeedVal);
+    earth.obj.rotateY(orbitSpeed.Earth * orbitSpeedVal);
+    mars.obj.rotateY(orbitSpeed.Mars * orbitSpeedVal);
+    jupiter.obj.rotateY(orbitSpeed.Jupiter * orbitSpeedVal);
+    saturn.obj.rotateY(orbitSpeed.Saturn * orbitSpeedVal);
+    uranus.obj.rotateY(orbitSpeed.Uranus * orbitSpeedVal);
+    neptune.obj.rotateY(orbitSpeed.Neptune * orbitSpeedVal);
+    pluto.obj.rotateY(orbitSpeed.Pluto * orbitSpeedVal);
 
     rayCaster.setFromCamera(mousePosition, camera);
     const intersects = rayCaster.intersectObjects(scene.children);
 
-    document.body.style.cursor = "default";
+    
 
     if (intersects.length > 0) {
         const intersectedObject = intersects[0].object;
-        highLight(intersectedObject);
+        if (planetSelected) {
+            resetHighlight(intersectedObject);
+        }
+        else{
+            highLight(intersectedObject);
+        }
         if (celestialMesh.includes(intersectedObject)) {
             selectedCelestial = intersectedObject;
         }
     }
     else{
+        document.body.style.cursor = "default";
         scene.children.forEach(object => {
-            resetScale(object);
+            resetHighlight(object);
             });
         celestialMesh.forEach(planet => {
-            resetScale(planet);
+            resetHighlight(planet);
         });
-        resetScale(saturnRing);
-        resetScale(uranusRing);
+        resetHighlight(saturnRing);
+        resetHighlight(uranusRing);
     }
 
-
     
+
     renderer.render(scene, camera);
 }
-
-
 
 renderer.setAnimationLoop(animate);
 
