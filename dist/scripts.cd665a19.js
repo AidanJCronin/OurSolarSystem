@@ -38561,11 +38561,11 @@ var planetDistances = exports.planetDistances = {
   Venus: 40,
   Earth: 50,
   Mars: 60,
-  Jupiter: 75,
-  Saturn: 90,
-  Uranus: 105,
-  Neptune: 115,
-  Pluto: 125
+  Jupiter: 80,
+  Saturn: 105,
+  Uranus: 125,
+  Neptune: 140,
+  Pluto: 155
 };
 
 // Sun Radius (696,000km)
@@ -38641,18 +38641,1136 @@ var celestialDescriptions = exports.celestialDescriptions = {
   Neptune: "Dark, cold and whipped by supersonic winds, giant Neptune is the eighth and most distant major planet orbiting our Sun. More than 30 times as far from the Sun as Earth, Neptune is not visible to the naked eye. In 2011, Neptune completed its first 165-year orbit since its discovery. The planet’s rich blue color comes from methane in its atmosphere, which absorbs red wavelengths of light, but allows blue ones to be reflected back into space. Neptune was the first planet located through mathematical calculations. Using predictions sent to him by French astronomer Urbain Le Verrier, based on disturbances in the orbit of Uranus, German astronomer Johann Galle was the first to observe the planet in 1846. The planet is named after the Roman god of the sea, as suggested by Le Verrier.",
   Pluto: "Pluto is a dwarf planet located in a distant region of our solar system beyond Neptune known as the Kuiper Belt. Pluto was long considered our ninth planet, but the International Astronomical Union reclassified Pluto as a dwarf planet in 2006. NASA's New Horizons was the first spacecraft to explore Pluto up close, flying by the dwarf planet and its moons in 2015. It found that Pluto is a complex world with mountains, valleys, plains, craters, and apparently even glaciers. Pluto was discovered in 1930 by astronomer Clyde Tombaugh at the Lowell Observatory in Flagstaff, Arizona. It was named by 11-year-old Venetia Burney of Oxford, England."
 };
-},{}],"js/shaders.js":[function(require,module,exports) {
+},{}],"../node_modules/three/examples/jsm/shaders/CopyShader.js":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.vertexShader = exports.fragmentShader = void 0;
-var vertexShader = exports.vertexShader = "\n    uniform float u_time;\n    vec3 mod289(vec3 x)\n    {\n    return x - floor(x * (1.0 / 289.0)) * 289.0;\n    }\n\n    vec4 mod289(vec4 x)\n    {\n    return x - floor(x * (1.0 / 289.0)) * 289.0;\n    }\n\n    vec4 permute(vec4 x)\n    {\n    return mod289(((x*34.0)+10.0)*x);\n    }\n\n    vec4 taylorInvSqrt(vec4 r)\n    {\n    return 1.79284291400159 - 0.85373472095314 * r;\n    }\n\n    vec3 fade(vec3 t) {\n    return t*t*t*(t*(t*6.0-15.0)+10.0);\n    }\n\n    float pnoise(vec3 P, vec3 rep)\n    {\n    vec3 Pi0 = mod(floor(P), rep); // Integer part, modulo period\n    vec3 Pi1 = mod(Pi0 + vec3(1.0), rep); // Integer part + 1, mod period\n    Pi0 = mod289(Pi0);\n    Pi1 = mod289(Pi1);\n    vec3 Pf0 = fract(P); // Fractional part for interpolation\n    vec3 Pf1 = Pf0 - vec3(1.0); // Fractional part - 1.0\n    vec4 ix = vec4(Pi0.x, Pi1.x, Pi0.x, Pi1.x);\n    vec4 iy = vec4(Pi0.yy, Pi1.yy);\n    vec4 iz0 = Pi0.zzzz;\n    vec4 iz1 = Pi1.zzzz;\n\n    vec4 ixy = permute(permute(ix) + iy);\n    vec4 ixy0 = permute(ixy + iz0);\n    vec4 ixy1 = permute(ixy + iz1);\n\n    vec4 gx0 = ixy0 * (1.0 / 7.0);\n    vec4 gy0 = fract(floor(gx0) * (1.0 / 7.0)) - 0.5;\n    gx0 = fract(gx0);\n    vec4 gz0 = vec4(0.5) - abs(gx0) - abs(gy0);\n    vec4 sz0 = step(gz0, vec4(0.0));\n    gx0 -= sz0 * (step(0.0, gx0) - 0.5);\n    gy0 -= sz0 * (step(0.0, gy0) - 0.5);\n\n    vec4 gx1 = ixy1 * (1.0 / 7.0);\n    vec4 gy1 = fract(floor(gx1) * (1.0 / 7.0)) - 0.5;\n    gx1 = fract(gx1);\n    vec4 gz1 = vec4(0.5) - abs(gx1) - abs(gy1);\n    vec4 sz1 = step(gz1, vec4(0.0));\n    gx1 -= sz1 * (step(0.0, gx1) - 0.5);\n    gy1 -= sz1 * (step(0.0, gy1) - 0.5);\n\n    vec3 g000 = vec3(gx0.x,gy0.x,gz0.x);\n    vec3 g100 = vec3(gx0.y,gy0.y,gz0.y);\n    vec3 g010 = vec3(gx0.z,gy0.z,gz0.z);\n    vec3 g110 = vec3(gx0.w,gy0.w,gz0.w);\n    vec3 g001 = vec3(gx1.x,gy1.x,gz1.x);\n    vec3 g101 = vec3(gx1.y,gy1.y,gz1.y);\n    vec3 g011 = vec3(gx1.z,gy1.z,gz1.z);\n    vec3 g111 = vec3(gx1.w,gy1.w,gz1.w);\n\n    vec4 norm0 = taylorInvSqrt(vec4(dot(g000, g000), dot(g010, g010), dot(g100, g100), dot(g110, g110)));\n    g000 *= norm0.x;\n    g010 *= norm0.y;\n    g100 *= norm0.z;\n    g110 *= norm0.w;\n    vec4 norm1 = taylorInvSqrt(vec4(dot(g001, g001), dot(g011, g011), dot(g101, g101), dot(g111, g111)));\n    g001 *= norm1.x;\n    g011 *= norm1.y;\n    g101 *= norm1.z;\n    g111 *= norm1.w;\n\n    float n000 = dot(g000, Pf0);\n    float n100 = dot(g100, vec3(Pf1.x, Pf0.yz));\n    float n010 = dot(g010, vec3(Pf0.x, Pf1.y, Pf0.z));\n    float n110 = dot(g110, vec3(Pf1.xy, Pf0.z));\n    float n001 = dot(g001, vec3(Pf0.xy, Pf1.z));\n    float n101 = dot(g101, vec3(Pf1.x, Pf0.y, Pf1.z));\n    float n011 = dot(g011, vec3(Pf0.x, Pf1.yz));\n    float n111 = dot(g111, Pf1);\n\n    vec3 fade_xyz = fade(Pf0);\n    vec4 n_z = mix(vec4(n000, n100, n010, n110), vec4(n001, n101, n011, n111), fade_xyz.z);\n    vec2 n_yz = mix(n_z.xy, n_z.zw, fade_xyz.y);\n    float n_xyz = mix(n_yz.x, n_yz.y, fade_xyz.x); \n    return 2.2 * n_xyz;\n    }\n\n    void main() {\n        float noise = 5.0 * pnoise(position + u_time, vec3(10.0));\n        float displacement = noise / 10.0;\n        vec3 newPosition = position + normal * displacement;\n        gl_Position = projectionMatrix * modelViewMatrix * vec4(newPosition, 1.0);\n    }\n    ";
-var fragmentShader = exports.fragmentShader = "\n    uniform vec2 u_resolution;\n    uniform sampler2D colorMap; // Declare the texture uniform\n\n    void main() {\n        vec2 st = gl_FragCoord.xy / u_resolution;\n\n        // Use UV coordinates for texture sampling\n        vec2 uv = vec2(st.x, 1.0 - st.y); // Flip the y-coordinate if needed\n\n        // Sample the colorMap texture at the UV coordinates\n        vec4 texColor = texture2D(colorMap, uv);\n\n        // Output the sampled color\n        gl_FragColor = texColor;\n    }\n";
-},{}],"img/stars.jpg":[function(require,module,exports) {
-module.exports = "/stars.316fb27b.jpg";
-},{}],"img/sun.jpg":[function(require,module,exports) {
+exports.CopyShader = void 0;
+/**
+ * Full-screen textured quad shader
+ */
+
+var CopyShader = exports.CopyShader = {
+  name: 'CopyShader',
+  uniforms: {
+    'tDiffuse': {
+      value: null
+    },
+    'opacity': {
+      value: 1.0
+    }
+  },
+  vertexShader: /* glsl */"\n\n\t\tvarying vec2 vUv;\n\n\t\tvoid main() {\n\n\t\t\tvUv = uv;\n\t\t\tgl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );\n\n\t\t}",
+  fragmentShader: /* glsl */"\n\n\t\tuniform float opacity;\n\n\t\tuniform sampler2D tDiffuse;\n\n\t\tvarying vec2 vUv;\n\n\t\tvoid main() {\n\n\t\t\tvec4 texel = texture2D( tDiffuse, vUv );\n\t\t\tgl_FragColor = opacity * texel;\n\n\n\t\t}"
+};
+},{}],"../node_modules/three/examples/jsm/postprocessing/Pass.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.Pass = exports.FullScreenQuad = void 0;
+var _three = require("three");
+function _callSuper(t, o, e) { return o = _getPrototypeOf(o), _possibleConstructorReturn(t, _isNativeReflectConstruct() ? Reflect.construct(o, e || [], _getPrototypeOf(t).constructor) : o.apply(t, e)); }
+function _possibleConstructorReturn(self, call) { if (call && (_typeof(call) === "object" || typeof call === "function")) { return call; } else if (call !== void 0) { throw new TypeError("Derived constructors may only return object or undefined"); } return _assertThisInitialized(self); }
+function _assertThisInitialized(self) { if (self === void 0) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return self; }
+function _isNativeReflectConstruct() { try { var t = !Boolean.prototype.valueOf.call(Reflect.construct(Boolean, [], function () {})); } catch (t) {} return (_isNativeReflectConstruct = function _isNativeReflectConstruct() { return !!t; })(); }
+function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf.bind() : function _getPrototypeOf(o) { return o.__proto__ || Object.getPrototypeOf(o); }; return _getPrototypeOf(o); }
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function"); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, writable: true, configurable: true } }); Object.defineProperty(subClass, "prototype", { writable: false }); if (superClass) _setPrototypeOf(subClass, superClass); }
+function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf ? Object.setPrototypeOf.bind() : function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
+function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, _toPropertyKey(descriptor.key), descriptor); } }
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); Object.defineProperty(Constructor, "prototype", { writable: false }); return Constructor; }
+function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == _typeof(i) ? i : i + ""; }
+function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != _typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+var Pass = exports.Pass = /*#__PURE__*/function () {
+  function Pass() {
+    _classCallCheck(this, Pass);
+    this.isPass = true;
+
+    // if set to true, the pass is processed by the composer
+    this.enabled = true;
+
+    // if set to true, the pass indicates to swap read and write buffer after rendering
+    this.needsSwap = true;
+
+    // if set to true, the pass clears its buffer before rendering
+    this.clear = false;
+
+    // if set to true, the result of the pass is rendered to screen. This is set automatically by EffectComposer.
+    this.renderToScreen = false;
+  }
+  return _createClass(Pass, [{
+    key: "setSize",
+    value: function setSize( /* width, height */) {}
+  }, {
+    key: "render",
+    value: function render( /* renderer, writeBuffer, readBuffer, deltaTime, maskActive */
+    ) {
+      console.error('THREE.Pass: .render() must be implemented in derived pass.');
+    }
+  }, {
+    key: "dispose",
+    value: function dispose() {}
+  }]);
+}(); // Helper for passes that need to fill the viewport with a single quad.
+var _camera = new _three.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+
+// https://github.com/mrdoob/three.js/pull/21358
+var FullscreenTriangleGeometry = /*#__PURE__*/function (_BufferGeometry) {
+  function FullscreenTriangleGeometry() {
+    var _this;
+    _classCallCheck(this, FullscreenTriangleGeometry);
+    _this = _callSuper(this, FullscreenTriangleGeometry);
+    _this.setAttribute('position', new _three.Float32BufferAttribute([-1, 3, 0, -1, -1, 0, 3, -1, 0], 3));
+    _this.setAttribute('uv', new _three.Float32BufferAttribute([0, 2, 0, 0, 2, 0], 2));
+    return _this;
+  }
+  _inherits(FullscreenTriangleGeometry, _BufferGeometry);
+  return _createClass(FullscreenTriangleGeometry);
+}(_three.BufferGeometry);
+var _geometry = new FullscreenTriangleGeometry();
+var FullScreenQuad = exports.FullScreenQuad = /*#__PURE__*/function () {
+  function FullScreenQuad(material) {
+    _classCallCheck(this, FullScreenQuad);
+    this._mesh = new _three.Mesh(_geometry, material);
+  }
+  return _createClass(FullScreenQuad, [{
+    key: "dispose",
+    value: function dispose() {
+      this._mesh.geometry.dispose();
+    }
+  }, {
+    key: "render",
+    value: function render(renderer) {
+      renderer.render(this._mesh, _camera);
+    }
+  }, {
+    key: "material",
+    get: function get() {
+      return this._mesh.material;
+    },
+    set: function set(value) {
+      this._mesh.material = value;
+    }
+  }]);
+}();
+},{"three":"../node_modules/three/build/three.module.js"}],"../node_modules/three/examples/jsm/postprocessing/ShaderPass.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.ShaderPass = void 0;
+var _three = require("three");
+var _Pass2 = require("./Pass.js");
+function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, _toPropertyKey(descriptor.key), descriptor); } }
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); Object.defineProperty(Constructor, "prototype", { writable: false }); return Constructor; }
+function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == _typeof(i) ? i : i + ""; }
+function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != _typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function _callSuper(t, o, e) { return o = _getPrototypeOf(o), _possibleConstructorReturn(t, _isNativeReflectConstruct() ? Reflect.construct(o, e || [], _getPrototypeOf(t).constructor) : o.apply(t, e)); }
+function _possibleConstructorReturn(self, call) { if (call && (_typeof(call) === "object" || typeof call === "function")) { return call; } else if (call !== void 0) { throw new TypeError("Derived constructors may only return object or undefined"); } return _assertThisInitialized(self); }
+function _assertThisInitialized(self) { if (self === void 0) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return self; }
+function _isNativeReflectConstruct() { try { var t = !Boolean.prototype.valueOf.call(Reflect.construct(Boolean, [], function () {})); } catch (t) {} return (_isNativeReflectConstruct = function _isNativeReflectConstruct() { return !!t; })(); }
+function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf.bind() : function _getPrototypeOf(o) { return o.__proto__ || Object.getPrototypeOf(o); }; return _getPrototypeOf(o); }
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function"); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, writable: true, configurable: true } }); Object.defineProperty(subClass, "prototype", { writable: false }); if (superClass) _setPrototypeOf(subClass, superClass); }
+function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf ? Object.setPrototypeOf.bind() : function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
+var ShaderPass = exports.ShaderPass = /*#__PURE__*/function (_Pass) {
+  function ShaderPass(shader, textureID) {
+    var _this;
+    _classCallCheck(this, ShaderPass);
+    _this = _callSuper(this, ShaderPass);
+    _this.textureID = textureID !== undefined ? textureID : 'tDiffuse';
+    if (shader instanceof _three.ShaderMaterial) {
+      _this.uniforms = shader.uniforms;
+      _this.material = shader;
+    } else if (shader) {
+      _this.uniforms = _three.UniformsUtils.clone(shader.uniforms);
+      _this.material = new _three.ShaderMaterial({
+        name: shader.name !== undefined ? shader.name : 'unspecified',
+        defines: Object.assign({}, shader.defines),
+        uniforms: _this.uniforms,
+        vertexShader: shader.vertexShader,
+        fragmentShader: shader.fragmentShader
+      });
+    }
+    _this.fsQuad = new _Pass2.FullScreenQuad(_this.material);
+    return _this;
+  }
+  _inherits(ShaderPass, _Pass);
+  return _createClass(ShaderPass, [{
+    key: "render",
+    value: function render(renderer, writeBuffer, readBuffer /*, deltaTime, maskActive */) {
+      if (this.uniforms[this.textureID]) {
+        this.uniforms[this.textureID].value = readBuffer.texture;
+      }
+      this.fsQuad.material = this.material;
+      if (this.renderToScreen) {
+        renderer.setRenderTarget(null);
+        this.fsQuad.render(renderer);
+      } else {
+        renderer.setRenderTarget(writeBuffer);
+        // TODO: Avoid using autoClear properties, see https://github.com/mrdoob/three.js/pull/15571#issuecomment-465669600
+        if (this.clear) renderer.clear(renderer.autoClearColor, renderer.autoClearDepth, renderer.autoClearStencil);
+        this.fsQuad.render(renderer);
+      }
+    }
+  }, {
+    key: "dispose",
+    value: function dispose() {
+      this.material.dispose();
+      this.fsQuad.dispose();
+    }
+  }]);
+}(_Pass2.Pass);
+},{"three":"../node_modules/three/build/three.module.js","./Pass.js":"../node_modules/three/examples/jsm/postprocessing/Pass.js"}],"../node_modules/three/examples/jsm/postprocessing/MaskPass.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.MaskPass = exports.ClearMaskPass = void 0;
+var _Pass3 = require("./Pass.js");
+function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, _toPropertyKey(descriptor.key), descriptor); } }
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); Object.defineProperty(Constructor, "prototype", { writable: false }); return Constructor; }
+function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == _typeof(i) ? i : i + ""; }
+function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != _typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function _callSuper(t, o, e) { return o = _getPrototypeOf(o), _possibleConstructorReturn(t, _isNativeReflectConstruct() ? Reflect.construct(o, e || [], _getPrototypeOf(t).constructor) : o.apply(t, e)); }
+function _possibleConstructorReturn(self, call) { if (call && (_typeof(call) === "object" || typeof call === "function")) { return call; } else if (call !== void 0) { throw new TypeError("Derived constructors may only return object or undefined"); } return _assertThisInitialized(self); }
+function _assertThisInitialized(self) { if (self === void 0) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return self; }
+function _isNativeReflectConstruct() { try { var t = !Boolean.prototype.valueOf.call(Reflect.construct(Boolean, [], function () {})); } catch (t) {} return (_isNativeReflectConstruct = function _isNativeReflectConstruct() { return !!t; })(); }
+function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf.bind() : function _getPrototypeOf(o) { return o.__proto__ || Object.getPrototypeOf(o); }; return _getPrototypeOf(o); }
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function"); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, writable: true, configurable: true } }); Object.defineProperty(subClass, "prototype", { writable: false }); if (superClass) _setPrototypeOf(subClass, superClass); }
+function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf ? Object.setPrototypeOf.bind() : function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
+var MaskPass = exports.MaskPass = /*#__PURE__*/function (_Pass) {
+  function MaskPass(scene, camera) {
+    var _this;
+    _classCallCheck(this, MaskPass);
+    _this = _callSuper(this, MaskPass);
+    _this.scene = scene;
+    _this.camera = camera;
+    _this.clear = true;
+    _this.needsSwap = false;
+    _this.inverse = false;
+    return _this;
+  }
+  _inherits(MaskPass, _Pass);
+  return _createClass(MaskPass, [{
+    key: "render",
+    value: function render(renderer, writeBuffer, readBuffer /*, deltaTime, maskActive */) {
+      var context = renderer.getContext();
+      var state = renderer.state;
+
+      // don't update color or depth
+
+      state.buffers.color.setMask(false);
+      state.buffers.depth.setMask(false);
+
+      // lock buffers
+
+      state.buffers.color.setLocked(true);
+      state.buffers.depth.setLocked(true);
+
+      // set up stencil
+
+      var writeValue, clearValue;
+      if (this.inverse) {
+        writeValue = 0;
+        clearValue = 1;
+      } else {
+        writeValue = 1;
+        clearValue = 0;
+      }
+      state.buffers.stencil.setTest(true);
+      state.buffers.stencil.setOp(context.REPLACE, context.REPLACE, context.REPLACE);
+      state.buffers.stencil.setFunc(context.ALWAYS, writeValue, 0xffffffff);
+      state.buffers.stencil.setClear(clearValue);
+      state.buffers.stencil.setLocked(true);
+
+      // draw into the stencil buffer
+
+      renderer.setRenderTarget(readBuffer);
+      if (this.clear) renderer.clear();
+      renderer.render(this.scene, this.camera);
+      renderer.setRenderTarget(writeBuffer);
+      if (this.clear) renderer.clear();
+      renderer.render(this.scene, this.camera);
+
+      // unlock color and depth buffer and make them writable for subsequent rendering/clearing
+
+      state.buffers.color.setLocked(false);
+      state.buffers.depth.setLocked(false);
+      state.buffers.color.setMask(true);
+      state.buffers.depth.setMask(true);
+
+      // only render where stencil is set to 1
+
+      state.buffers.stencil.setLocked(false);
+      state.buffers.stencil.setFunc(context.EQUAL, 1, 0xffffffff); // draw if == 1
+      state.buffers.stencil.setOp(context.KEEP, context.KEEP, context.KEEP);
+      state.buffers.stencil.setLocked(true);
+    }
+  }]);
+}(_Pass3.Pass);
+var ClearMaskPass = exports.ClearMaskPass = /*#__PURE__*/function (_Pass2) {
+  function ClearMaskPass() {
+    var _this2;
+    _classCallCheck(this, ClearMaskPass);
+    _this2 = _callSuper(this, ClearMaskPass);
+    _this2.needsSwap = false;
+    return _this2;
+  }
+  _inherits(ClearMaskPass, _Pass2);
+  return _createClass(ClearMaskPass, [{
+    key: "render",
+    value: function render(renderer /*, writeBuffer, readBuffer, deltaTime, maskActive */) {
+      renderer.state.buffers.stencil.setLocked(false);
+      renderer.state.buffers.stencil.setTest(false);
+    }
+  }]);
+}(_Pass3.Pass);
+},{"./Pass.js":"../node_modules/three/examples/jsm/postprocessing/Pass.js"}],"../node_modules/three/examples/jsm/postprocessing/EffectComposer.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.EffectComposer = void 0;
+var _three = require("three");
+var _CopyShader = require("../shaders/CopyShader.js");
+var _ShaderPass = require("./ShaderPass.js");
+var _MaskPass = require("./MaskPass.js");
+function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, _toPropertyKey(descriptor.key), descriptor); } }
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); Object.defineProperty(Constructor, "prototype", { writable: false }); return Constructor; }
+function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == _typeof(i) ? i : i + ""; }
+function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != _typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+var EffectComposer = exports.EffectComposer = /*#__PURE__*/function () {
+  function EffectComposer(renderer, renderTarget) {
+    _classCallCheck(this, EffectComposer);
+    this.renderer = renderer;
+    this._pixelRatio = renderer.getPixelRatio();
+    if (renderTarget === undefined) {
+      var size = renderer.getSize(new _three.Vector2());
+      this._width = size.width;
+      this._height = size.height;
+      renderTarget = new _three.WebGLRenderTarget(this._width * this._pixelRatio, this._height * this._pixelRatio, {
+        type: _three.HalfFloatType
+      });
+      renderTarget.texture.name = 'EffectComposer.rt1';
+    } else {
+      this._width = renderTarget.width;
+      this._height = renderTarget.height;
+    }
+    this.renderTarget1 = renderTarget;
+    this.renderTarget2 = renderTarget.clone();
+    this.renderTarget2.texture.name = 'EffectComposer.rt2';
+    this.writeBuffer = this.renderTarget1;
+    this.readBuffer = this.renderTarget2;
+    this.renderToScreen = true;
+    this.passes = [];
+    this.copyPass = new _ShaderPass.ShaderPass(_CopyShader.CopyShader);
+    this.copyPass.material.blending = _three.NoBlending;
+    this.clock = new _three.Clock();
+  }
+  return _createClass(EffectComposer, [{
+    key: "swapBuffers",
+    value: function swapBuffers() {
+      var tmp = this.readBuffer;
+      this.readBuffer = this.writeBuffer;
+      this.writeBuffer = tmp;
+    }
+  }, {
+    key: "addPass",
+    value: function addPass(pass) {
+      this.passes.push(pass);
+      pass.setSize(this._width * this._pixelRatio, this._height * this._pixelRatio);
+    }
+  }, {
+    key: "insertPass",
+    value: function insertPass(pass, index) {
+      this.passes.splice(index, 0, pass);
+      pass.setSize(this._width * this._pixelRatio, this._height * this._pixelRatio);
+    }
+  }, {
+    key: "removePass",
+    value: function removePass(pass) {
+      var index = this.passes.indexOf(pass);
+      if (index !== -1) {
+        this.passes.splice(index, 1);
+      }
+    }
+  }, {
+    key: "isLastEnabledPass",
+    value: function isLastEnabledPass(passIndex) {
+      for (var i = passIndex + 1; i < this.passes.length; i++) {
+        if (this.passes[i].enabled) {
+          return false;
+        }
+      }
+      return true;
+    }
+  }, {
+    key: "render",
+    value: function render(deltaTime) {
+      // deltaTime value is in seconds
+
+      if (deltaTime === undefined) {
+        deltaTime = this.clock.getDelta();
+      }
+      var currentRenderTarget = this.renderer.getRenderTarget();
+      var maskActive = false;
+      for (var i = 0, il = this.passes.length; i < il; i++) {
+        var pass = this.passes[i];
+        if (pass.enabled === false) continue;
+        pass.renderToScreen = this.renderToScreen && this.isLastEnabledPass(i);
+        pass.render(this.renderer, this.writeBuffer, this.readBuffer, deltaTime, maskActive);
+        if (pass.needsSwap) {
+          if (maskActive) {
+            var context = this.renderer.getContext();
+            var stencil = this.renderer.state.buffers.stencil;
+
+            //context.stencilFunc( context.NOTEQUAL, 1, 0xffffffff );
+            stencil.setFunc(context.NOTEQUAL, 1, 0xffffffff);
+            this.copyPass.render(this.renderer, this.writeBuffer, this.readBuffer, deltaTime);
+
+            //context.stencilFunc( context.EQUAL, 1, 0xffffffff );
+            stencil.setFunc(context.EQUAL, 1, 0xffffffff);
+          }
+          this.swapBuffers();
+        }
+        if (_MaskPass.MaskPass !== undefined) {
+          if (pass instanceof _MaskPass.MaskPass) {
+            maskActive = true;
+          } else if (pass instanceof _MaskPass.ClearMaskPass) {
+            maskActive = false;
+          }
+        }
+      }
+      this.renderer.setRenderTarget(currentRenderTarget);
+    }
+  }, {
+    key: "reset",
+    value: function reset(renderTarget) {
+      if (renderTarget === undefined) {
+        var size = this.renderer.getSize(new _three.Vector2());
+        this._pixelRatio = this.renderer.getPixelRatio();
+        this._width = size.width;
+        this._height = size.height;
+        renderTarget = this.renderTarget1.clone();
+        renderTarget.setSize(this._width * this._pixelRatio, this._height * this._pixelRatio);
+      }
+      this.renderTarget1.dispose();
+      this.renderTarget2.dispose();
+      this.renderTarget1 = renderTarget;
+      this.renderTarget2 = renderTarget.clone();
+      this.writeBuffer = this.renderTarget1;
+      this.readBuffer = this.renderTarget2;
+    }
+  }, {
+    key: "setSize",
+    value: function setSize(width, height) {
+      this._width = width;
+      this._height = height;
+      var effectiveWidth = this._width * this._pixelRatio;
+      var effectiveHeight = this._height * this._pixelRatio;
+      this.renderTarget1.setSize(effectiveWidth, effectiveHeight);
+      this.renderTarget2.setSize(effectiveWidth, effectiveHeight);
+      for (var i = 0; i < this.passes.length; i++) {
+        this.passes[i].setSize(effectiveWidth, effectiveHeight);
+      }
+    }
+  }, {
+    key: "setPixelRatio",
+    value: function setPixelRatio(pixelRatio) {
+      this._pixelRatio = pixelRatio;
+      this.setSize(this._width, this._height);
+    }
+  }, {
+    key: "dispose",
+    value: function dispose() {
+      this.renderTarget1.dispose();
+      this.renderTarget2.dispose();
+      this.copyPass.dispose();
+    }
+  }]);
+}();
+},{"three":"../node_modules/three/build/three.module.js","../shaders/CopyShader.js":"../node_modules/three/examples/jsm/shaders/CopyShader.js","./ShaderPass.js":"../node_modules/three/examples/jsm/postprocessing/ShaderPass.js","./MaskPass.js":"../node_modules/three/examples/jsm/postprocessing/MaskPass.js"}],"../node_modules/three/examples/jsm/postprocessing/RenderPass.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.RenderPass = void 0;
+var _three = require("three");
+var _Pass2 = require("./Pass.js");
+function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, _toPropertyKey(descriptor.key), descriptor); } }
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); Object.defineProperty(Constructor, "prototype", { writable: false }); return Constructor; }
+function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == _typeof(i) ? i : i + ""; }
+function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != _typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function _callSuper(t, o, e) { return o = _getPrototypeOf(o), _possibleConstructorReturn(t, _isNativeReflectConstruct() ? Reflect.construct(o, e || [], _getPrototypeOf(t).constructor) : o.apply(t, e)); }
+function _possibleConstructorReturn(self, call) { if (call && (_typeof(call) === "object" || typeof call === "function")) { return call; } else if (call !== void 0) { throw new TypeError("Derived constructors may only return object or undefined"); } return _assertThisInitialized(self); }
+function _assertThisInitialized(self) { if (self === void 0) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return self; }
+function _isNativeReflectConstruct() { try { var t = !Boolean.prototype.valueOf.call(Reflect.construct(Boolean, [], function () {})); } catch (t) {} return (_isNativeReflectConstruct = function _isNativeReflectConstruct() { return !!t; })(); }
+function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf.bind() : function _getPrototypeOf(o) { return o.__proto__ || Object.getPrototypeOf(o); }; return _getPrototypeOf(o); }
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function"); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, writable: true, configurable: true } }); Object.defineProperty(subClass, "prototype", { writable: false }); if (superClass) _setPrototypeOf(subClass, superClass); }
+function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf ? Object.setPrototypeOf.bind() : function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
+var RenderPass = exports.RenderPass = /*#__PURE__*/function (_Pass) {
+  function RenderPass(scene, camera) {
+    var _this;
+    var overrideMaterial = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
+    var clearColor = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : null;
+    var clearAlpha = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : null;
+    _classCallCheck(this, RenderPass);
+    _this = _callSuper(this, RenderPass);
+    _this.scene = scene;
+    _this.camera = camera;
+    _this.overrideMaterial = overrideMaterial;
+    _this.clearColor = clearColor;
+    _this.clearAlpha = clearAlpha;
+    _this.clear = true;
+    _this.clearDepth = false;
+    _this.needsSwap = false;
+    _this._oldClearColor = new _three.Color();
+    return _this;
+  }
+  _inherits(RenderPass, _Pass);
+  return _createClass(RenderPass, [{
+    key: "render",
+    value: function render(renderer, writeBuffer, readBuffer /*, deltaTime, maskActive */) {
+      var oldAutoClear = renderer.autoClear;
+      renderer.autoClear = false;
+      var oldClearAlpha, oldOverrideMaterial;
+      if (this.overrideMaterial !== null) {
+        oldOverrideMaterial = this.scene.overrideMaterial;
+        this.scene.overrideMaterial = this.overrideMaterial;
+      }
+      if (this.clearColor !== null) {
+        renderer.getClearColor(this._oldClearColor);
+        renderer.setClearColor(this.clearColor);
+      }
+      if (this.clearAlpha !== null) {
+        oldClearAlpha = renderer.getClearAlpha();
+        renderer.setClearAlpha(this.clearAlpha);
+      }
+      if (this.clearDepth == true) {
+        renderer.clearDepth();
+      }
+      renderer.setRenderTarget(this.renderToScreen ? null : readBuffer);
+      if (this.clear === true) {
+        // TODO: Avoid using autoClear properties, see https://github.com/mrdoob/three.js/pull/15571#issuecomment-465669600
+        renderer.clear(renderer.autoClearColor, renderer.autoClearDepth, renderer.autoClearStencil);
+      }
+      renderer.render(this.scene, this.camera);
+
+      // restore
+
+      if (this.clearColor !== null) {
+        renderer.setClearColor(this._oldClearColor);
+      }
+      if (this.clearAlpha !== null) {
+        renderer.setClearAlpha(oldClearAlpha);
+      }
+      if (this.overrideMaterial !== null) {
+        this.scene.overrideMaterial = oldOverrideMaterial;
+      }
+      renderer.autoClear = oldAutoClear;
+    }
+  }]);
+}(_Pass2.Pass);
+},{"three":"../node_modules/three/build/three.module.js","./Pass.js":"../node_modules/three/examples/jsm/postprocessing/Pass.js"}],"../node_modules/three/examples/jsm/shaders/FilmShader.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.FilmShader = void 0;
+var FilmShader = exports.FilmShader = {
+  name: 'FilmShader',
+  uniforms: {
+    'tDiffuse': {
+      value: null
+    },
+    'time': {
+      value: 0.0
+    },
+    'intensity': {
+      value: 0.5
+    },
+    'grayscale': {
+      value: false
+    }
+  },
+  vertexShader: /* glsl */"\n\n\t\tvarying vec2 vUv;\n\n\t\tvoid main() {\n\n\t\t\tvUv = uv;\n\t\t\tgl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );\n\n\t\t}",
+  fragmentShader: /* glsl */"\n\n\t\t#include <common>\n\n\t\tuniform float intensity;\n\t\tuniform bool grayscale;\n\t\tuniform float time;\n\n\t\tuniform sampler2D tDiffuse;\n\n\t\tvarying vec2 vUv;\n\n\t\tvoid main() {\n\n\t\t\tvec4 base = texture2D( tDiffuse, vUv );\n\n\t\t\tfloat noise = rand( fract( vUv + time ) );\n\n\t\t\tvec3 color = base.rgb + base.rgb * clamp( 0.1 + noise, 0.0, 1.0 );\n\n\t\t\tcolor = mix( base.rgb, color, intensity );\n\n\t\t\tif ( grayscale ) {\n\n\t\t\t\tcolor = vec3( luminance( color ) ); // assuming linear-srgb\n\n\t\t\t}\n\n\t\t\tgl_FragColor = vec4( color, base.a );\n\n\t\t}"
+};
+},{}],"../node_modules/three/examples/jsm/postprocessing/FilmPass.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.FilmPass = void 0;
+var _three = require("three");
+var _Pass2 = require("./Pass.js");
+var _FilmShader = require("../shaders/FilmShader.js");
+function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, _toPropertyKey(descriptor.key), descriptor); } }
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); Object.defineProperty(Constructor, "prototype", { writable: false }); return Constructor; }
+function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == _typeof(i) ? i : i + ""; }
+function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != _typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function _callSuper(t, o, e) { return o = _getPrototypeOf(o), _possibleConstructorReturn(t, _isNativeReflectConstruct() ? Reflect.construct(o, e || [], _getPrototypeOf(t).constructor) : o.apply(t, e)); }
+function _possibleConstructorReturn(self, call) { if (call && (_typeof(call) === "object" || typeof call === "function")) { return call; } else if (call !== void 0) { throw new TypeError("Derived constructors may only return object or undefined"); } return _assertThisInitialized(self); }
+function _assertThisInitialized(self) { if (self === void 0) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return self; }
+function _isNativeReflectConstruct() { try { var t = !Boolean.prototype.valueOf.call(Reflect.construct(Boolean, [], function () {})); } catch (t) {} return (_isNativeReflectConstruct = function _isNativeReflectConstruct() { return !!t; })(); }
+function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf.bind() : function _getPrototypeOf(o) { return o.__proto__ || Object.getPrototypeOf(o); }; return _getPrototypeOf(o); }
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function"); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, writable: true, configurable: true } }); Object.defineProperty(subClass, "prototype", { writable: false }); if (superClass) _setPrototypeOf(subClass, superClass); }
+function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf ? Object.setPrototypeOf.bind() : function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
+var FilmPass = exports.FilmPass = /*#__PURE__*/function (_Pass) {
+  function FilmPass() {
+    var _this;
+    var intensity = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 0.5;
+    var grayscale = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
+    _classCallCheck(this, FilmPass);
+    _this = _callSuper(this, FilmPass);
+    var shader = _FilmShader.FilmShader;
+    _this.uniforms = _three.UniformsUtils.clone(shader.uniforms);
+    _this.material = new _three.ShaderMaterial({
+      name: shader.name,
+      uniforms: _this.uniforms,
+      vertexShader: shader.vertexShader,
+      fragmentShader: shader.fragmentShader
+    });
+    _this.uniforms.intensity.value = intensity; // (0 = no effect, 1 = full effect)
+    _this.uniforms.grayscale.value = grayscale;
+    _this.fsQuad = new _Pass2.FullScreenQuad(_this.material);
+    return _this;
+  }
+  _inherits(FilmPass, _Pass);
+  return _createClass(FilmPass, [{
+    key: "render",
+    value: function render(renderer, writeBuffer, readBuffer, deltaTime /*, maskActive */) {
+      this.uniforms['tDiffuse'].value = readBuffer.texture;
+      this.uniforms['time'].value += deltaTime;
+      if (this.renderToScreen) {
+        renderer.setRenderTarget(null);
+        this.fsQuad.render(renderer);
+      } else {
+        renderer.setRenderTarget(writeBuffer);
+        if (this.clear) renderer.clear();
+        this.fsQuad.render(renderer);
+      }
+    }
+  }, {
+    key: "dispose",
+    value: function dispose() {
+      this.material.dispose();
+      this.fsQuad.dispose();
+    }
+  }]);
+}(_Pass2.Pass);
+},{"three":"../node_modules/three/build/three.module.js","./Pass.js":"../node_modules/three/examples/jsm/postprocessing/Pass.js","../shaders/FilmShader.js":"../node_modules/three/examples/jsm/shaders/FilmShader.js"}],"../node_modules/three/examples/jsm/shaders/LuminosityHighPassShader.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.LuminosityHighPassShader = void 0;
+var _three = require("three");
+/**
+ * Luminosity
+ * http://en.wikipedia.org/wiki/Luminosity
+ */
+
+var LuminosityHighPassShader = exports.LuminosityHighPassShader = {
+  name: 'LuminosityHighPassShader',
+  shaderID: 'luminosityHighPass',
+  uniforms: {
+    'tDiffuse': {
+      value: null
+    },
+    'luminosityThreshold': {
+      value: 1.0
+    },
+    'smoothWidth': {
+      value: 1.0
+    },
+    'defaultColor': {
+      value: new _three.Color(0x000000)
+    },
+    'defaultOpacity': {
+      value: 0.0
+    }
+  },
+  vertexShader: /* glsl */"\n\n\t\tvarying vec2 vUv;\n\n\t\tvoid main() {\n\n\t\t\tvUv = uv;\n\n\t\t\tgl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );\n\n\t\t}",
+  fragmentShader: /* glsl */"\n\n\t\tuniform sampler2D tDiffuse;\n\t\tuniform vec3 defaultColor;\n\t\tuniform float defaultOpacity;\n\t\tuniform float luminosityThreshold;\n\t\tuniform float smoothWidth;\n\n\t\tvarying vec2 vUv;\n\n\t\tvoid main() {\n\n\t\t\tvec4 texel = texture2D( tDiffuse, vUv );\n\n\t\t\tvec3 luma = vec3( 0.299, 0.587, 0.114 );\n\n\t\t\tfloat v = dot( texel.xyz, luma );\n\n\t\t\tvec4 outputColor = vec4( defaultColor.rgb, defaultOpacity );\n\n\t\t\tfloat alpha = smoothstep( luminosityThreshold, luminosityThreshold + smoothWidth, v );\n\n\t\t\tgl_FragColor = mix( outputColor, texel, alpha );\n\n\t\t}"
+};
+},{"three":"../node_modules/three/build/three.module.js"}],"../node_modules/three/examples/jsm/postprocessing/UnrealBloomPass.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.UnrealBloomPass = void 0;
+var _three = require("three");
+var _Pass2 = require("./Pass.js");
+var _CopyShader = require("../shaders/CopyShader.js");
+var _LuminosityHighPassShader = require("../shaders/LuminosityHighPassShader.js");
+function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, _toPropertyKey(descriptor.key), descriptor); } }
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); Object.defineProperty(Constructor, "prototype", { writable: false }); return Constructor; }
+function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == _typeof(i) ? i : i + ""; }
+function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != _typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function _callSuper(t, o, e) { return o = _getPrototypeOf(o), _possibleConstructorReturn(t, _isNativeReflectConstruct() ? Reflect.construct(o, e || [], _getPrototypeOf(t).constructor) : o.apply(t, e)); }
+function _possibleConstructorReturn(self, call) { if (call && (_typeof(call) === "object" || typeof call === "function")) { return call; } else if (call !== void 0) { throw new TypeError("Derived constructors may only return object or undefined"); } return _assertThisInitialized(self); }
+function _assertThisInitialized(self) { if (self === void 0) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return self; }
+function _isNativeReflectConstruct() { try { var t = !Boolean.prototype.valueOf.call(Reflect.construct(Boolean, [], function () {})); } catch (t) {} return (_isNativeReflectConstruct = function _isNativeReflectConstruct() { return !!t; })(); }
+function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf.bind() : function _getPrototypeOf(o) { return o.__proto__ || Object.getPrototypeOf(o); }; return _getPrototypeOf(o); }
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function"); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, writable: true, configurable: true } }); Object.defineProperty(subClass, "prototype", { writable: false }); if (superClass) _setPrototypeOf(subClass, superClass); }
+function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf ? Object.setPrototypeOf.bind() : function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
+/**
+ * UnrealBloomPass is inspired by the bloom pass of Unreal Engine. It creates a
+ * mip map chain of bloom textures and blurs them with different radii. Because
+ * of the weighted combination of mips, and because larger blurs are done on
+ * higher mips, this effect provides good quality and performance.
+ *
+ * Reference:
+ * - https://docs.unrealengine.com/latest/INT/Engine/Rendering/PostProcessEffects/Bloom/
+ */
+var UnrealBloomPass = exports.UnrealBloomPass = /*#__PURE__*/function (_Pass) {
+  function UnrealBloomPass(resolution, strength, radius, threshold) {
+    var _this;
+    _classCallCheck(this, UnrealBloomPass);
+    _this = _callSuper(this, UnrealBloomPass);
+    _this.strength = strength !== undefined ? strength : 1;
+    _this.radius = radius;
+    _this.threshold = threshold;
+    _this.resolution = resolution !== undefined ? new _three.Vector2(resolution.x, resolution.y) : new _three.Vector2(256, 256);
+
+    // create color only once here, reuse it later inside the render function
+    _this.clearColor = new _three.Color(0, 0, 0);
+
+    // render targets
+    _this.renderTargetsHorizontal = [];
+    _this.renderTargetsVertical = [];
+    _this.nMips = 5;
+    var resx = Math.round(_this.resolution.x / 2);
+    var resy = Math.round(_this.resolution.y / 2);
+    _this.renderTargetBright = new _three.WebGLRenderTarget(resx, resy, {
+      type: _three.HalfFloatType
+    });
+    _this.renderTargetBright.texture.name = 'UnrealBloomPass.bright';
+    _this.renderTargetBright.texture.generateMipmaps = false;
+    for (var i = 0; i < _this.nMips; i++) {
+      var renderTargetHorizonal = new _three.WebGLRenderTarget(resx, resy, {
+        type: _three.HalfFloatType
+      });
+      renderTargetHorizonal.texture.name = 'UnrealBloomPass.h' + i;
+      renderTargetHorizonal.texture.generateMipmaps = false;
+      _this.renderTargetsHorizontal.push(renderTargetHorizonal);
+      var renderTargetVertical = new _three.WebGLRenderTarget(resx, resy, {
+        type: _three.HalfFloatType
+      });
+      renderTargetVertical.texture.name = 'UnrealBloomPass.v' + i;
+      renderTargetVertical.texture.generateMipmaps = false;
+      _this.renderTargetsVertical.push(renderTargetVertical);
+      resx = Math.round(resx / 2);
+      resy = Math.round(resy / 2);
+    }
+
+    // luminosity high pass material
+
+    var highPassShader = _LuminosityHighPassShader.LuminosityHighPassShader;
+    _this.highPassUniforms = _three.UniformsUtils.clone(highPassShader.uniforms);
+    _this.highPassUniforms['luminosityThreshold'].value = threshold;
+    _this.highPassUniforms['smoothWidth'].value = 0.01;
+    _this.materialHighPassFilter = new _three.ShaderMaterial({
+      uniforms: _this.highPassUniforms,
+      vertexShader: highPassShader.vertexShader,
+      fragmentShader: highPassShader.fragmentShader
+    });
+
+    // gaussian blur materials
+
+    _this.separableBlurMaterials = [];
+    var kernelSizeArray = [3, 5, 7, 9, 11];
+    resx = Math.round(_this.resolution.x / 2);
+    resy = Math.round(_this.resolution.y / 2);
+    for (var _i = 0; _i < _this.nMips; _i++) {
+      _this.separableBlurMaterials.push(_this.getSeperableBlurMaterial(kernelSizeArray[_i]));
+      _this.separableBlurMaterials[_i].uniforms['invSize'].value = new _three.Vector2(1 / resx, 1 / resy);
+      resx = Math.round(resx / 2);
+      resy = Math.round(resy / 2);
+    }
+
+    // composite material
+
+    _this.compositeMaterial = _this.getCompositeMaterial(_this.nMips);
+    _this.compositeMaterial.uniforms['blurTexture1'].value = _this.renderTargetsVertical[0].texture;
+    _this.compositeMaterial.uniforms['blurTexture2'].value = _this.renderTargetsVertical[1].texture;
+    _this.compositeMaterial.uniforms['blurTexture3'].value = _this.renderTargetsVertical[2].texture;
+    _this.compositeMaterial.uniforms['blurTexture4'].value = _this.renderTargetsVertical[3].texture;
+    _this.compositeMaterial.uniforms['blurTexture5'].value = _this.renderTargetsVertical[4].texture;
+    _this.compositeMaterial.uniforms['bloomStrength'].value = strength;
+    _this.compositeMaterial.uniforms['bloomRadius'].value = 0.1;
+    var bloomFactors = [1.0, 0.8, 0.6, 0.4, 0.2];
+    _this.compositeMaterial.uniforms['bloomFactors'].value = bloomFactors;
+    _this.bloomTintColors = [new _three.Vector3(1, 1, 1), new _three.Vector3(1, 1, 1), new _three.Vector3(1, 1, 1), new _three.Vector3(1, 1, 1), new _three.Vector3(1, 1, 1)];
+    _this.compositeMaterial.uniforms['bloomTintColors'].value = _this.bloomTintColors;
+
+    // blend material
+
+    var copyShader = _CopyShader.CopyShader;
+    _this.copyUniforms = _three.UniformsUtils.clone(copyShader.uniforms);
+    _this.blendMaterial = new _three.ShaderMaterial({
+      uniforms: _this.copyUniforms,
+      vertexShader: copyShader.vertexShader,
+      fragmentShader: copyShader.fragmentShader,
+      blending: _three.AdditiveBlending,
+      depthTest: false,
+      depthWrite: false,
+      transparent: true
+    });
+    _this.enabled = true;
+    _this.needsSwap = false;
+    _this._oldClearColor = new _three.Color();
+    _this.oldClearAlpha = 1;
+    _this.basic = new _three.MeshBasicMaterial();
+    _this.fsQuad = new _Pass2.FullScreenQuad(null);
+    return _this;
+  }
+  _inherits(UnrealBloomPass, _Pass);
+  return _createClass(UnrealBloomPass, [{
+    key: "dispose",
+    value: function dispose() {
+      for (var i = 0; i < this.renderTargetsHorizontal.length; i++) {
+        this.renderTargetsHorizontal[i].dispose();
+      }
+      for (var _i2 = 0; _i2 < this.renderTargetsVertical.length; _i2++) {
+        this.renderTargetsVertical[_i2].dispose();
+      }
+      this.renderTargetBright.dispose();
+
+      //
+
+      for (var _i3 = 0; _i3 < this.separableBlurMaterials.length; _i3++) {
+        this.separableBlurMaterials[_i3].dispose();
+      }
+      this.compositeMaterial.dispose();
+      this.blendMaterial.dispose();
+      this.basic.dispose();
+
+      //
+
+      this.fsQuad.dispose();
+    }
+  }, {
+    key: "setSize",
+    value: function setSize(width, height) {
+      var resx = Math.round(width / 2);
+      var resy = Math.round(height / 2);
+      this.renderTargetBright.setSize(resx, resy);
+      for (var i = 0; i < this.nMips; i++) {
+        this.renderTargetsHorizontal[i].setSize(resx, resy);
+        this.renderTargetsVertical[i].setSize(resx, resy);
+        this.separableBlurMaterials[i].uniforms['invSize'].value = new _three.Vector2(1 / resx, 1 / resy);
+        resx = Math.round(resx / 2);
+        resy = Math.round(resy / 2);
+      }
+    }
+  }, {
+    key: "render",
+    value: function render(renderer, writeBuffer, readBuffer, deltaTime, maskActive) {
+      renderer.getClearColor(this._oldClearColor);
+      this.oldClearAlpha = renderer.getClearAlpha();
+      var oldAutoClear = renderer.autoClear;
+      renderer.autoClear = false;
+      renderer.setClearColor(this.clearColor, 0);
+      if (maskActive) renderer.state.buffers.stencil.setTest(false);
+
+      // Render input to screen
+
+      if (this.renderToScreen) {
+        this.fsQuad.material = this.basic;
+        this.basic.map = readBuffer.texture;
+        renderer.setRenderTarget(null);
+        renderer.clear();
+        this.fsQuad.render(renderer);
+      }
+
+      // 1. Extract Bright Areas
+
+      this.highPassUniforms['tDiffuse'].value = readBuffer.texture;
+      this.highPassUniforms['luminosityThreshold'].value = this.threshold;
+      this.fsQuad.material = this.materialHighPassFilter;
+      renderer.setRenderTarget(this.renderTargetBright);
+      renderer.clear();
+      this.fsQuad.render(renderer);
+
+      // 2. Blur All the mips progressively
+
+      var inputRenderTarget = this.renderTargetBright;
+      for (var i = 0; i < this.nMips; i++) {
+        this.fsQuad.material = this.separableBlurMaterials[i];
+        this.separableBlurMaterials[i].uniforms['colorTexture'].value = inputRenderTarget.texture;
+        this.separableBlurMaterials[i].uniforms['direction'].value = UnrealBloomPass.BlurDirectionX;
+        renderer.setRenderTarget(this.renderTargetsHorizontal[i]);
+        renderer.clear();
+        this.fsQuad.render(renderer);
+        this.separableBlurMaterials[i].uniforms['colorTexture'].value = this.renderTargetsHorizontal[i].texture;
+        this.separableBlurMaterials[i].uniforms['direction'].value = UnrealBloomPass.BlurDirectionY;
+        renderer.setRenderTarget(this.renderTargetsVertical[i]);
+        renderer.clear();
+        this.fsQuad.render(renderer);
+        inputRenderTarget = this.renderTargetsVertical[i];
+      }
+
+      // Composite All the mips
+
+      this.fsQuad.material = this.compositeMaterial;
+      this.compositeMaterial.uniforms['bloomStrength'].value = this.strength;
+      this.compositeMaterial.uniforms['bloomRadius'].value = this.radius;
+      this.compositeMaterial.uniforms['bloomTintColors'].value = this.bloomTintColors;
+      renderer.setRenderTarget(this.renderTargetsHorizontal[0]);
+      renderer.clear();
+      this.fsQuad.render(renderer);
+
+      // Blend it additively over the input texture
+
+      this.fsQuad.material = this.blendMaterial;
+      this.copyUniforms['tDiffuse'].value = this.renderTargetsHorizontal[0].texture;
+      if (maskActive) renderer.state.buffers.stencil.setTest(true);
+      if (this.renderToScreen) {
+        renderer.setRenderTarget(null);
+        this.fsQuad.render(renderer);
+      } else {
+        renderer.setRenderTarget(readBuffer);
+        this.fsQuad.render(renderer);
+      }
+
+      // Restore renderer settings
+
+      renderer.setClearColor(this._oldClearColor, this.oldClearAlpha);
+      renderer.autoClear = oldAutoClear;
+    }
+  }, {
+    key: "getSeperableBlurMaterial",
+    value: function getSeperableBlurMaterial(kernelRadius) {
+      var coefficients = [];
+      for (var i = 0; i < kernelRadius; i++) {
+        coefficients.push(0.39894 * Math.exp(-0.5 * i * i / (kernelRadius * kernelRadius)) / kernelRadius);
+      }
+      return new _three.ShaderMaterial({
+        defines: {
+          'KERNEL_RADIUS': kernelRadius
+        },
+        uniforms: {
+          'colorTexture': {
+            value: null
+          },
+          'invSize': {
+            value: new _three.Vector2(0.5, 0.5)
+          },
+          // inverse texture size
+          'direction': {
+            value: new _three.Vector2(0.5, 0.5)
+          },
+          'gaussianCoefficients': {
+            value: coefficients
+          } // precomputed Gaussian coefficients
+        },
+        vertexShader: "varying vec2 vUv;\n\t\t\t\tvoid main() {\n\t\t\t\t\tvUv = uv;\n\t\t\t\t\tgl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );\n\t\t\t\t}",
+        fragmentShader: "#include <common>\n\t\t\t\tvarying vec2 vUv;\n\t\t\t\tuniform sampler2D colorTexture;\n\t\t\t\tuniform vec2 invSize;\n\t\t\t\tuniform vec2 direction;\n\t\t\t\tuniform float gaussianCoefficients[KERNEL_RADIUS];\n\n\t\t\t\tvoid main() {\n\t\t\t\t\tfloat weightSum = gaussianCoefficients[0];\n\t\t\t\t\tvec3 diffuseSum = texture2D( colorTexture, vUv ).rgb * weightSum;\n\t\t\t\t\tfor( int i = 1; i < KERNEL_RADIUS; i ++ ) {\n\t\t\t\t\t\tfloat x = float(i);\n\t\t\t\t\t\tfloat w = gaussianCoefficients[i];\n\t\t\t\t\t\tvec2 uvOffset = direction * invSize * x;\n\t\t\t\t\t\tvec3 sample1 = texture2D( colorTexture, vUv + uvOffset ).rgb;\n\t\t\t\t\t\tvec3 sample2 = texture2D( colorTexture, vUv - uvOffset ).rgb;\n\t\t\t\t\t\tdiffuseSum += (sample1 + sample2) * w;\n\t\t\t\t\t\tweightSum += 2.0 * w;\n\t\t\t\t\t}\n\t\t\t\t\tgl_FragColor = vec4(diffuseSum/weightSum, 1.0);\n\t\t\t\t}"
+      });
+    }
+  }, {
+    key: "getCompositeMaterial",
+    value: function getCompositeMaterial(nMips) {
+      return new _three.ShaderMaterial({
+        defines: {
+          'NUM_MIPS': nMips
+        },
+        uniforms: {
+          'blurTexture1': {
+            value: null
+          },
+          'blurTexture2': {
+            value: null
+          },
+          'blurTexture3': {
+            value: null
+          },
+          'blurTexture4': {
+            value: null
+          },
+          'blurTexture5': {
+            value: null
+          },
+          'bloomStrength': {
+            value: 1.0
+          },
+          'bloomFactors': {
+            value: null
+          },
+          'bloomTintColors': {
+            value: null
+          },
+          'bloomRadius': {
+            value: 0.0
+          }
+        },
+        vertexShader: "varying vec2 vUv;\n\t\t\t\tvoid main() {\n\t\t\t\t\tvUv = uv;\n\t\t\t\t\tgl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );\n\t\t\t\t}",
+        fragmentShader: "varying vec2 vUv;\n\t\t\t\tuniform sampler2D blurTexture1;\n\t\t\t\tuniform sampler2D blurTexture2;\n\t\t\t\tuniform sampler2D blurTexture3;\n\t\t\t\tuniform sampler2D blurTexture4;\n\t\t\t\tuniform sampler2D blurTexture5;\n\t\t\t\tuniform float bloomStrength;\n\t\t\t\tuniform float bloomRadius;\n\t\t\t\tuniform float bloomFactors[NUM_MIPS];\n\t\t\t\tuniform vec3 bloomTintColors[NUM_MIPS];\n\n\t\t\t\tfloat lerpBloomFactor(const in float factor) {\n\t\t\t\t\tfloat mirrorFactor = 1.2 - factor;\n\t\t\t\t\treturn mix(factor, mirrorFactor, bloomRadius);\n\t\t\t\t}\n\n\t\t\t\tvoid main() {\n\t\t\t\t\tgl_FragColor = bloomStrength * ( lerpBloomFactor(bloomFactors[0]) * vec4(bloomTintColors[0], 1.0) * texture2D(blurTexture1, vUv) +\n\t\t\t\t\t\tlerpBloomFactor(bloomFactors[1]) * vec4(bloomTintColors[1], 1.0) * texture2D(blurTexture2, vUv) +\n\t\t\t\t\t\tlerpBloomFactor(bloomFactors[2]) * vec4(bloomTintColors[2], 1.0) * texture2D(blurTexture3, vUv) +\n\t\t\t\t\t\tlerpBloomFactor(bloomFactors[3]) * vec4(bloomTintColors[3], 1.0) * texture2D(blurTexture4, vUv) +\n\t\t\t\t\t\tlerpBloomFactor(bloomFactors[4]) * vec4(bloomTintColors[4], 1.0) * texture2D(blurTexture5, vUv) );\n\t\t\t\t}"
+      });
+    }
+  }]);
+}(_Pass2.Pass);
+UnrealBloomPass.BlurDirectionX = new _three.Vector2(1.0, 0.0);
+UnrealBloomPass.BlurDirectionY = new _three.Vector2(0.0, 1.0);
+},{"three":"../node_modules/three/build/three.module.js","./Pass.js":"../node_modules/three/examples/jsm/postprocessing/Pass.js","../shaders/CopyShader.js":"../node_modules/three/examples/jsm/shaders/CopyShader.js","../shaders/LuminosityHighPassShader.js":"../node_modules/three/examples/jsm/shaders/LuminosityHighPassShader.js"}],"../node_modules/three/examples/jsm/postprocessing/RenderPixelatedPass.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.RenderPixelatedPass = void 0;
+var _three = require("three");
+var _Pass2 = require("./Pass.js");
+function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, _toPropertyKey(descriptor.key), descriptor); } }
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); Object.defineProperty(Constructor, "prototype", { writable: false }); return Constructor; }
+function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == _typeof(i) ? i : i + ""; }
+function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != _typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function _callSuper(t, o, e) { return o = _getPrototypeOf(o), _possibleConstructorReturn(t, _isNativeReflectConstruct() ? Reflect.construct(o, e || [], _getPrototypeOf(t).constructor) : o.apply(t, e)); }
+function _possibleConstructorReturn(self, call) { if (call && (_typeof(call) === "object" || typeof call === "function")) { return call; } else if (call !== void 0) { throw new TypeError("Derived constructors may only return object or undefined"); } return _assertThisInitialized(self); }
+function _assertThisInitialized(self) { if (self === void 0) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return self; }
+function _isNativeReflectConstruct() { try { var t = !Boolean.prototype.valueOf.call(Reflect.construct(Boolean, [], function () {})); } catch (t) {} return (_isNativeReflectConstruct = function _isNativeReflectConstruct() { return !!t; })(); }
+function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf.bind() : function _getPrototypeOf(o) { return o.__proto__ || Object.getPrototypeOf(o); }; return _getPrototypeOf(o); }
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function"); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, writable: true, configurable: true } }); Object.defineProperty(subClass, "prototype", { writable: false }); if (superClass) _setPrototypeOf(subClass, superClass); }
+function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf ? Object.setPrototypeOf.bind() : function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
+var RenderPixelatedPass = exports.RenderPixelatedPass = /*#__PURE__*/function (_Pass) {
+  function RenderPixelatedPass(pixelSize, scene, camera) {
+    var _this;
+    var options = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
+    _classCallCheck(this, RenderPixelatedPass);
+    _this = _callSuper(this, RenderPixelatedPass);
+    _this.pixelSize = pixelSize;
+    _this.resolution = new _three.Vector2();
+    _this.renderResolution = new _three.Vector2();
+    _this.pixelatedMaterial = _this.createPixelatedMaterial();
+    _this.normalMaterial = new _three.MeshNormalMaterial();
+    _this.fsQuad = new _Pass2.FullScreenQuad(_this.pixelatedMaterial);
+    _this.scene = scene;
+    _this.camera = camera;
+    _this.normalEdgeStrength = options.normalEdgeStrength || 0.3;
+    _this.depthEdgeStrength = options.depthEdgeStrength || 0.4;
+    _this.beautyRenderTarget = new _three.WebGLRenderTarget();
+    _this.beautyRenderTarget.texture.minFilter = _three.NearestFilter;
+    _this.beautyRenderTarget.texture.magFilter = _three.NearestFilter;
+    _this.beautyRenderTarget.texture.type = _three.HalfFloatType;
+    _this.beautyRenderTarget.depthTexture = new _three.DepthTexture();
+    _this.normalRenderTarget = new _three.WebGLRenderTarget();
+    _this.normalRenderTarget.texture.minFilter = _three.NearestFilter;
+    _this.normalRenderTarget.texture.magFilter = _three.NearestFilter;
+    _this.normalRenderTarget.texture.type = _three.HalfFloatType;
+    return _this;
+  }
+  _inherits(RenderPixelatedPass, _Pass);
+  return _createClass(RenderPixelatedPass, [{
+    key: "dispose",
+    value: function dispose() {
+      this.beautyRenderTarget.dispose();
+      this.normalRenderTarget.dispose();
+      this.pixelatedMaterial.dispose();
+      this.normalMaterial.dispose();
+      this.fsQuad.dispose();
+    }
+  }, {
+    key: "setSize",
+    value: function setSize(width, height) {
+      this.resolution.set(width, height);
+      this.renderResolution.set(width / this.pixelSize | 0, height / this.pixelSize | 0);
+      var _this$renderResolutio = this.renderResolution,
+        x = _this$renderResolutio.x,
+        y = _this$renderResolutio.y;
+      this.beautyRenderTarget.setSize(x, y);
+      this.normalRenderTarget.setSize(x, y);
+      this.fsQuad.material.uniforms.resolution.value.set(x, y, 1 / x, 1 / y);
+    }
+  }, {
+    key: "setPixelSize",
+    value: function setPixelSize(pixelSize) {
+      this.pixelSize = pixelSize;
+      this.setSize(this.resolution.x, this.resolution.y);
+    }
+  }, {
+    key: "render",
+    value: function render(renderer, writeBuffer) {
+      var uniforms = this.fsQuad.material.uniforms;
+      uniforms.normalEdgeStrength.value = this.normalEdgeStrength;
+      uniforms.depthEdgeStrength.value = this.depthEdgeStrength;
+      renderer.setRenderTarget(this.beautyRenderTarget);
+      renderer.render(this.scene, this.camera);
+      var overrideMaterial_old = this.scene.overrideMaterial;
+      renderer.setRenderTarget(this.normalRenderTarget);
+      this.scene.overrideMaterial = this.normalMaterial;
+      renderer.render(this.scene, this.camera);
+      this.scene.overrideMaterial = overrideMaterial_old;
+      uniforms.tDiffuse.value = this.beautyRenderTarget.texture;
+      uniforms.tDepth.value = this.beautyRenderTarget.depthTexture;
+      uniforms.tNormal.value = this.normalRenderTarget.texture;
+      if (this.renderToScreen) {
+        renderer.setRenderTarget(null);
+      } else {
+        renderer.setRenderTarget(writeBuffer);
+        if (this.clear) renderer.clear();
+      }
+      this.fsQuad.render(renderer);
+    }
+  }, {
+    key: "createPixelatedMaterial",
+    value: function createPixelatedMaterial() {
+      return new _three.ShaderMaterial({
+        uniforms: {
+          tDiffuse: {
+            value: null
+          },
+          tDepth: {
+            value: null
+          },
+          tNormal: {
+            value: null
+          },
+          resolution: {
+            value: new _three.Vector4(this.renderResolution.x, this.renderResolution.y, 1 / this.renderResolution.x, 1 / this.renderResolution.y)
+          },
+          normalEdgeStrength: {
+            value: 0
+          },
+          depthEdgeStrength: {
+            value: 0
+          }
+        },
+        vertexShader: /* glsl */"\n\t\t\t\tvarying vec2 vUv;\n\n\t\t\t\tvoid main() {\n\n\t\t\t\t\tvUv = uv;\n\t\t\t\t\tgl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );\n\n\t\t\t\t}\n\t\t\t",
+        fragmentShader: /* glsl */"\n\t\t\t\tuniform sampler2D tDiffuse;\n\t\t\t\tuniform sampler2D tDepth;\n\t\t\t\tuniform sampler2D tNormal;\n\t\t\t\tuniform vec4 resolution;\n\t\t\t\tuniform float normalEdgeStrength;\n\t\t\t\tuniform float depthEdgeStrength;\n\t\t\t\tvarying vec2 vUv;\n\n\t\t\t\tfloat getDepth(int x, int y) {\n\n\t\t\t\t\treturn texture2D( tDepth, vUv + vec2(x, y) * resolution.zw ).r;\n\n\t\t\t\t}\n\n\t\t\t\tvec3 getNormal(int x, int y) {\n\n\t\t\t\t\treturn texture2D( tNormal, vUv + vec2(x, y) * resolution.zw ).rgb * 2.0 - 1.0;\n\n\t\t\t\t}\n\n\t\t\t\tfloat depthEdgeIndicator(float depth, vec3 normal) {\n\n\t\t\t\t\tfloat diff = 0.0;\n\t\t\t\t\tdiff += clamp(getDepth(1, 0) - depth, 0.0, 1.0);\n\t\t\t\t\tdiff += clamp(getDepth(-1, 0) - depth, 0.0, 1.0);\n\t\t\t\t\tdiff += clamp(getDepth(0, 1) - depth, 0.0, 1.0);\n\t\t\t\t\tdiff += clamp(getDepth(0, -1) - depth, 0.0, 1.0);\n\t\t\t\t\treturn floor(smoothstep(0.01, 0.02, diff) * 2.) / 2.;\n\n\t\t\t\t}\n\n\t\t\t\tfloat neighborNormalEdgeIndicator(int x, int y, float depth, vec3 normal) {\n\n\t\t\t\t\tfloat depthDiff = getDepth(x, y) - depth;\n\t\t\t\t\tvec3 neighborNormal = getNormal(x, y);\n\n\t\t\t\t\t// Edge pixels should yield to faces who's normals are closer to the bias normal.\n\t\t\t\t\tvec3 normalEdgeBias = vec3(1., 1., 1.); // This should probably be a parameter.\n\t\t\t\t\tfloat normalDiff = dot(normal - neighborNormal, normalEdgeBias);\n\t\t\t\t\tfloat normalIndicator = clamp(smoothstep(-.01, .01, normalDiff), 0.0, 1.0);\n\n\t\t\t\t\t// Only the shallower pixel should detect the normal edge.\n\t\t\t\t\tfloat depthIndicator = clamp(sign(depthDiff * .25 + .0025), 0.0, 1.0);\n\n\t\t\t\t\treturn (1.0 - dot(normal, neighborNormal)) * depthIndicator * normalIndicator;\n\n\t\t\t\t}\n\n\t\t\t\tfloat normalEdgeIndicator(float depth, vec3 normal) {\n\n\t\t\t\t\tfloat indicator = 0.0;\n\n\t\t\t\t\tindicator += neighborNormalEdgeIndicator(0, -1, depth, normal);\n\t\t\t\t\tindicator += neighborNormalEdgeIndicator(0, 1, depth, normal);\n\t\t\t\t\tindicator += neighborNormalEdgeIndicator(-1, 0, depth, normal);\n\t\t\t\t\tindicator += neighborNormalEdgeIndicator(1, 0, depth, normal);\n\n\t\t\t\t\treturn step(0.1, indicator);\n\n\t\t\t\t}\n\n\t\t\t\tvoid main() {\n\n\t\t\t\t\tvec4 texel = texture2D( tDiffuse, vUv );\n\n\t\t\t\t\tfloat depth = 0.0;\n\t\t\t\t\tvec3 normal = vec3(0.0);\n\n\t\t\t\t\tif (depthEdgeStrength > 0.0 || normalEdgeStrength > 0.0) {\n\n\t\t\t\t\t\tdepth = getDepth(0, 0);\n\t\t\t\t\t\tnormal = getNormal(0, 0);\n\n\t\t\t\t\t}\n\n\t\t\t\t\tfloat dei = 0.0;\n\t\t\t\t\tif (depthEdgeStrength > 0.0)\n\t\t\t\t\t\tdei = depthEdgeIndicator(depth, normal);\n\n\t\t\t\t\tfloat nei = 0.0;\n\t\t\t\t\tif (normalEdgeStrength > 0.0)\n\t\t\t\t\t\tnei = normalEdgeIndicator(depth, normal);\n\n\t\t\t\t\tfloat Strength = dei > 0.0 ? (1.0 - depthEdgeStrength * dei) : (1.0 + normalEdgeStrength * nei);\n\n\t\t\t\t\tgl_FragColor = texel * Strength;\n\n\t\t\t\t}\n\t\t\t"
+      });
+    }
+  }]);
+}(_Pass2.Pass);
+},{"three":"../node_modules/three/build/three.module.js","./Pass.js":"../node_modules/three/examples/jsm/postprocessing/Pass.js"}],"img/sun.jpg":[function(require,module,exports) {
 module.exports = "/sun.9ca88d60.jpg";
 },{}],"img/mercury.jpg":[function(require,module,exports) {
 module.exports = "/mercury.1ba05a95.jpg";
@@ -38684,8 +39802,11 @@ module.exports = "/space.8e2af93f.jpg";
 var THREE = _interopRequireWildcard(require("three"));
 var _OrbitControls = require("three/examples/jsm/controls/OrbitControls.js");
 var _constants = require("./constants.js");
-var _shaders = require("./shaders.js");
-var _stars = _interopRequireDefault(require("../img/stars.jpg"));
+var _EffectComposer = require("three/examples/jsm/postprocessing/EffectComposer.js");
+var _RenderPass = require("three/examples/jsm/postprocessing/RenderPass.js");
+var _FilmPass = require("three/examples/jsm/postprocessing/FilmPass.js");
+var _UnrealBloomPass = require("three/examples/jsm/postprocessing/UnrealBloomPass.js");
+var _RenderPixelatedPass = require("three/examples/jsm/postprocessing/RenderPixelatedPass.js");
 var _sun = _interopRequireDefault(require("../img/sun.jpg"));
 var _mercury = _interopRequireDefault(require("../img/mercury.jpg"));
 var _venus = _interopRequireDefault(require("../img/venus.jpg"));
@@ -38727,8 +39848,6 @@ camera.position.set(-70, 100, 100);
 orbit.update();
 var ambientLight = new THREE.AmbientLight(0x333333);
 scene.add(ambientLight);
-var pointLight = new THREE.PointLight(0xFFFFFF, 1, 400);
-scene.add(pointLight);
 var cubeTextureLoader = new THREE.CubeTextureLoader();
 scene.background = cubeTextureLoader.load([_space.default, _space.default, _space.default, _space.default, _space.default, _space.default]);
 scene.backgroundBlurriness = 0.2;
@@ -38775,53 +39894,18 @@ function animateParticles() {
 
 //PLANET CREATION
 
-var sunTex = textureLoader.load(_sun.default);
-sunTex.wrapS = THREE.RepeatWrapping;
-sunTex.wrapT = THREE.RepeatWrapping;
-var uniforms = {
-  u_resolution: {
-    type: 'v2',
-    value: new THREE.Vector2(window.innerWidth, window.innerHeight)
-  },
-  u_time: {
-    type: 'f',
-    value: 0.0
-  },
-  colorMap: {
-    type: 't',
-    value: sunTex
-  }
-};
-var mat = new THREE.ShaderMaterial({
-  uniforms: uniforms,
-  vertexShader: _shaders.vertexShader,
-  fragmentShader: _shaders.fragmentShader
+var sunGeo = new THREE.SphereGeometry(10, 40, 40);
+var sunMat = new THREE.MeshBasicMaterial({
+  map: textureLoader.load(_sun.default)
 });
-var sunGeo = new THREE.IcosahedronGeometry(15, 30);
-var sun = new THREE.Mesh(sunGeo, mat);
+var sun = new THREE.Mesh(sunGeo, sunMat);
 scene.add(sun);
 function createPlanet(size, texture, position, ring) {
   var planetTexture = textureLoader.load(texture);
-  var uniforms = {
-    u_resolution: {
-      type: 'v2',
-      value: new THREE.Vector2(window.innerWidth, window.innerHeight)
-    },
-    u_time: {
-      type: 'f',
-      value: 0.0
-    },
-    colorMap: {
-      type: 't',
-      value: planetTexture
-    }
-  };
-  var mat = new THREE.ShaderMaterial({
-    uniforms: uniforms,
-    vertexShader: _shaders.vertexShader,
-    fragmentShader: _shaders.fragmentShader
+  var mat = new THREE.MeshStandardMaterial({
+    map: planetTexture
   });
-  var geo = new THREE.IcosahedronGeometry(size, 30);
+  var geo = new THREE.SphereGeometry(size, 100, 100);
   var mesh = new THREE.Mesh(geo, mat);
   var obj = new THREE.Object3D();
   obj.add(mesh);
@@ -38837,6 +39921,8 @@ function createPlanet(size, texture, position, ring) {
     ringMesh.position.x = position;
     ringMesh.rotation.x = -0.5 * Math.PI;
   }
+  var ambientLight = new THREE.AmbientLight(0xFFFFFF, 0.01);
+  mesh.add(ambientLight);
   scene.add(obj);
   mesh.position.x = position;
   return {
@@ -38867,6 +39953,7 @@ var pluto = createPlanet(_constants.celestialSize.Pluto, _pluto.default, _consta
 var celestialMesh = [sun, mercury.mesh, venus.mesh, earth.mesh, mars.mesh, jupiter.mesh, saturn.mesh, uranus.mesh, neptune.mesh, pluto.mesh];
 var planetMesh = [mercury.mesh, venus.mesh, earth.mesh, mars.mesh, jupiter.mesh, saturn.mesh, uranus.mesh, neptune.mesh, pluto.mesh];
 var planets = [mercury, venus, earth, mars, jupiter, saturn, uranus, neptune, pluto];
+console.log(saturn.ringMesh);
 sun.name = 'Sun';
 mercury.mesh.name = 'Mercury';
 venus.mesh.name = 'Venus';
@@ -38879,18 +39966,22 @@ uranus.mesh.name = 'Uranus';
 uranusRing.name = 'UranusRing';
 neptune.mesh.name = 'Neptune';
 pluto.mesh.name = 'Pluto';
+var pointLight = new THREE.PointLight(0xFFFFFF, 7000, 4000);
+pointLight.castShadow = true;
+scene.add(pointLight);
 
 //ORBIT CREATION
 
 function createOrbit(size, color) {
   var obj = new THREE.Object3D();
   scene.add(obj);
-  var ringGeo = new THREE.RingGeometry(size - 0.2, size, 1000);
-  var ringMat = new THREE.MeshBasicMaterial({
+  var ringGeo = new THREE.RingGeometry(size - 0.1, size + 0.1, 500); // Increase outer radius for thickness
+
+  var ringMat = new THREE.MeshPhongMaterial({
     color: color,
     side: THREE.DoubleSide
   });
-  var ringMesh = new THREE.Mesh(ringGeo, ringMat); // Assign ringMesh
+  var ringMesh = new THREE.Mesh(ringGeo, ringMat);
   obj.add(ringMesh);
   ringMesh.rotation.x = -0.5 * Math.PI;
   return {
@@ -38961,19 +40052,40 @@ function onClick(event) {
   }
 }
 var targetPlanet;
+var tempCamera;
+var tempOrbit;
+var tempScene;
+var composerTemp;
+var tempCameraRenderPass;
 function handleCelestialClick(celestial) {
-  console.log("Clicked on planet:", celestial.name);
   planetSelected = true;
   if (targetPlanet) {
     targetPlanet.remove(camera);
   }
   targetPlanet = celestial;
-  celestial.add(camera);
-  var celestialName = celestial.name;
-  camera.position.set(_constants.celestialSize[celestialName] + 30, 30, 0);
-  camera.lookAt(celestial.position);
-  orbit.target = celestial;
-  rotationalSpeedVal = 0;
+  tempScene = new THREE.Scene();
+  var clonedCelestial = celestial.clone();
+  tempScene.add(clonedCelestial);
+  clonedCelestial.position.set(0, 0, 0);
+  var ambientLight = new THREE.AmbientLight(0xffffff, 1);
+  tempScene.add(ambientLight);
+  tempScene.background = cubeTextureLoader.load([_space.default, _space.default, _space.default, _space.default, _space.default, _space.default]);
+  tempScene.backgroundBlurriness = 0.2;
+  tempScene.backgroundIntensity = 0.05;
+  tempScene.add(particles);
+  tempCamera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 10000);
+  tempOrbit = new _OrbitControls.OrbitControls(tempCamera, renderer.domElement);
+  tempCamera.position.set(0, 0, 0);
+  tempCamera.position.x += -_constants.celestialSize[celestial.name] - 30;
+  tempCamera.lookAt(celestial.position);
+  tempOrbit.update();
+  composerTemp = new _EffectComposer.EffectComposer(renderer);
+  tempCameraRenderPass = new _RenderPass.RenderPass(tempScene, tempCamera);
+  composerTemp.addPass(tempCameraRenderPass);
+  var pixelPassTemp = new _RenderPixelatedPass.RenderPixelatedPass(3, tempScene, tempCamera);
+  composerTemp.addPass(pixelPassTemp);
+  var bloomPassTemp = new _UnrealBloomPass.UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 0.15, 5, 0.1);
+  composerTemp.addPass(bloomPassTemp);
   var infoBox = document.createElement('div');
   infoBox.id = 'info-box';
   infoBox.innerHTML = "<p>".concat(_constants.celestialDescriptions[celestial.name], "</p>");
@@ -38985,6 +40097,12 @@ function handleCelestialClick(celestial) {
   document.body.appendChild(resetButton);
 }
 function resetView() {
+  tempCamera = null;
+  tempOrbit = null;
+  tempScene = null;
+  composerTemp = null;
+  tempCameraRenderPass = null;
+  scene.add(particles);
   planetSelected = false;
   var infoBox = document.getElementById('info-box');
   var resetButton = document.querySelector('button');
@@ -38999,12 +40117,29 @@ function resetView() {
   camera.lookAt(scene.position);
   orbit.target = new THREE.Vector3(0, 0, 0);
 }
-var clock = new THREE.Clock();
+var isCursorHeldDown = false; // Flag to track the state of the cursor
+
+// Add event listeners for mouse down and up
+document.addEventListener('mousedown', function () {
+  isCursorHeldDown = true;
+});
+document.addEventListener('mouseup', function () {
+  isCursorHeldDown = false;
+});
+
+//POST PROCESSING
+
+var composerMain = new _EffectComposer.EffectComposer(renderer);
+var cameraRenderPass = new _RenderPass.RenderPass(scene, camera);
+composerMain.addPass(cameraRenderPass);
+var pixelPass = new _RenderPixelatedPass.RenderPixelatedPass(3, scene, camera);
+composerMain.addPass(pixelPass);
+var bloomPass = new _UnrealBloomPass.UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 0.25, 5, 0.1);
+composerMain.addPass(bloomPass);
 
 //ANIMATE
 
 function animate() {
-  uniforms.u_time.value = clock.getElapsedTime();
   animateParticles();
 
   // Self-rotation
@@ -39036,7 +40171,9 @@ function animate() {
     if (planetSelected) {
       resetHighlight(intersectedObject);
     } else {
-      highLight(intersectedObject);
+      if (!isCursorHeldDown) {
+        highLight(intersectedObject);
+      }
     }
     if (celestialMesh.includes(intersectedObject)) {
       selectedCelestial = intersectedObject;
@@ -39052,7 +40189,12 @@ function animate() {
     resetHighlight(saturnRing);
     resetHighlight(uranusRing);
   }
-  renderer.render(scene, camera);
+  if (tempCamera) {
+    composerTemp.render();
+  } else {
+    //renderer.render(scene, camera);
+    composerMain.render();
+  }
 }
 renderer.setAnimationLoop(animate);
 window.addEventListener('resize', function () {
@@ -39060,7 +40202,7 @@ window.addEventListener('resize', function () {
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
 });
-},{"three":"../node_modules/three/build/three.module.js","three/examples/jsm/controls/OrbitControls.js":"../node_modules/three/examples/jsm/controls/OrbitControls.js","./constants.js":"js/constants.js","./shaders.js":"js/shaders.js","../img/stars.jpg":"img/stars.jpg","../img/sun.jpg":"img/sun.jpg","../img/mercury.jpg":"img/mercury.jpg","../img/venus.jpg":"img/venus.jpg","../img/earth.jpg":"img/earth.jpg","../img/mars.jpg":"img/mars.jpg","../img/jupiter.jpg":"img/jupiter.jpg","../img/saturn.jpg":"img/saturn.jpg","../img/saturn ring.png":"img/saturn ring.png","../img/uranus.jpg":"img/uranus.jpg","../img/uranus ring.png":"img/uranus ring.png","../img/neptune.jpg":"img/neptune.jpg","../img/pluto.jpg":"img/pluto.jpg","../img/space.jpg":"img/space.jpg"}],"../../../../../AppData/Roaming/npm/node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
+},{"three":"../node_modules/three/build/three.module.js","three/examples/jsm/controls/OrbitControls.js":"../node_modules/three/examples/jsm/controls/OrbitControls.js","./constants.js":"js/constants.js","three/examples/jsm/postprocessing/EffectComposer.js":"../node_modules/three/examples/jsm/postprocessing/EffectComposer.js","three/examples/jsm/postprocessing/RenderPass.js":"../node_modules/three/examples/jsm/postprocessing/RenderPass.js","three/examples/jsm/postprocessing/FilmPass.js":"../node_modules/three/examples/jsm/postprocessing/FilmPass.js","three/examples/jsm/postprocessing/UnrealBloomPass.js":"../node_modules/three/examples/jsm/postprocessing/UnrealBloomPass.js","three/examples/jsm/postprocessing/RenderPixelatedPass.js":"../node_modules/three/examples/jsm/postprocessing/RenderPixelatedPass.js","../img/sun.jpg":"img/sun.jpg","../img/mercury.jpg":"img/mercury.jpg","../img/venus.jpg":"img/venus.jpg","../img/earth.jpg":"img/earth.jpg","../img/mars.jpg":"img/mars.jpg","../img/jupiter.jpg":"img/jupiter.jpg","../img/saturn.jpg":"img/saturn.jpg","../img/saturn ring.png":"img/saturn ring.png","../img/uranus.jpg":"img/uranus.jpg","../img/uranus ring.png":"img/uranus ring.png","../img/neptune.jpg":"img/neptune.jpg","../img/pluto.jpg":"img/pluto.jpg","../img/space.jpg":"img/space.jpg"}],"../../../../../AppData/Roaming/npm/node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
 var OldModule = module.bundle.Module;
@@ -39085,7 +40227,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "55597" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "56444" + '/');
   ws.onmessage = function (event) {
     checkedAssets = {};
     assetsToAccept = [];
