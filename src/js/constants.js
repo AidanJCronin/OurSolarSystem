@@ -5,11 +5,11 @@ export const planetDistances = {
     Venus: 40,
     Earth: 50,
     Mars: 60,
-    Jupiter: 75,
-    Saturn: 90,
-    Uranus: 105,
-    Neptune: 115,
-    Pluto: 125
+    Jupiter: 80,
+    Saturn: 105,
+    Uranus: 125,
+    Neptune: 140,
+    Pluto: 155
   }
 
 // Sun Radius (696,000km)

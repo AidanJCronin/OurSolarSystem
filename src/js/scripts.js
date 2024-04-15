@@ -8,9 +8,12 @@ import { saturnRingSize } from './constants.js';
 import { uranusRingSize } from './constants.js';
 import { celestialDescriptions } from './constants.js';
 
-import { vertexShader, fragmentShader } from './shaders.js';
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
+import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
+import { FilmPass } from "three/examples/jsm/postprocessing/FilmPass.js"; 
+import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass.js"; 
+import { RenderPixelatedPass } from "three/examples/jsm/postprocessing/RenderPixelatedPass.js"; 
 
-import starsTexture from '../img/stars.jpg';
 import sunTexture from '../img/sun.jpg';
 import mercuryTexture from '../img/mercury.jpg';
 import venusTexture from '../img/venus.jpg';
@@ -62,9 +65,6 @@ orbit.update();
 
 const ambientLight = new THREE.AmbientLight(0x333333);
 scene.add(ambientLight);
-
-const pointLight = new THREE.PointLight(0xFFFFFF, 1, 400);
-scene.add(pointLight);
 
 const cubeTextureLoader = new THREE.CubeTextureLoader();
 scene.background = cubeTextureLoader.load([
@@ -127,40 +127,20 @@ function animateParticles() {
 
 //PLANET CREATION
 
-const sunTex = textureLoader.load(sunTexture);
-sunTex.wrapS = THREE.RepeatWrapping;
-sunTex.wrapT = THREE.RepeatWrapping;
-
-const uniforms = {
-    u_resolution: { type: 'v2', value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
-    u_time: { type: 'f', value: 0.0 },
-    colorMap: { type: 't', value: sunTex }
-  };
-  
-  const mat = new THREE.ShaderMaterial({
-    uniforms,
-    vertexShader: vertexShader,
-    fragmentShader: fragmentShader
-  });
-
-const sunGeo = new THREE.IcosahedronGeometry(15,30);
-const sun = new THREE.Mesh(sunGeo, mat);
+const sunGeo = new THREE.SphereGeometry(10, 40, 40);
+const sunMat = new THREE.MeshBasicMaterial({
+    map: textureLoader.load(sunTexture)
+});
+const sun = new THREE.Mesh(sunGeo, sunMat);
 scene.add(sun);
 
 function createPlanet(size, texture, position, ring) {
     const planetTexture = textureLoader.load(texture);
-    const uniforms = {
-        u_resolution: { type: 'v2', value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
-        u_time: { type: 'f', value: 0.0 },
-        colorMap: { type: 't', value: planetTexture }
-    };
-  
-    const mat = new THREE.ShaderMaterial({
-        uniforms,
-        vertexShader: vertexShader,
-        fragmentShader: fragmentShader
+    const mat = new THREE.MeshStandardMaterial({
+        map: planetTexture,
+        
     });
-    const geo = new THREE.IcosahedronGeometry(size,30);
+    const geo = new THREE.SphereGeometry(size, 100, 100);
     const mesh = new THREE.Mesh(geo, mat);
     const obj = new THREE.Object3D();
     obj.add(mesh);
@@ -179,6 +159,10 @@ function createPlanet(size, texture, position, ring) {
         ringMesh.position.x = position;
         ringMesh.rotation.x = -0.5 * Math.PI;
     }
+    const ambientLight = new THREE.AmbientLight(0xFFFFFF, 0.01);
+    mesh.add(ambientLight);
+
+    
     scene.add(obj);
     mesh.position.x = position;
     return { mesh, obj, ringMesh, };
@@ -212,6 +196,7 @@ const celestialMesh = [sun, mercury.mesh, venus.mesh, earth.mesh, mars.mesh, jup
 const planetMesh = [mercury.mesh, venus.mesh, earth.mesh, mars.mesh, jupiter.mesh, saturn.mesh, uranus.mesh, neptune.mesh, pluto.mesh];
 const planets = [mercury, venus, earth, mars, jupiter, saturn, uranus, neptune, pluto];
 
+console.log(saturn.ringMesh);
 sun.name = 'Sun';
 mercury.mesh.name = 'Mercury';
 venus.mesh.name = 'Venus';
@@ -225,25 +210,30 @@ uranusRing.name = 'UranusRing';
 neptune.mesh.name = 'Neptune';
 pluto.mesh.name = 'Pluto';
 
+const pointLight = new THREE.PointLight(0xFFFFFF, 7000, 4000, );
+pointLight.castShadow = true;
+scene.add(pointLight);
+
 
 //ORBIT CREATION
 
-function createOrbit(size, color){
+function createOrbit(size, color) {
     const obj = new THREE.Object3D();
     scene.add(obj);
-    const ringGeo = new THREE.RingGeometry(
-        size - 0.2,
-        size,
-        1000);
-    const ringMat = new THREE.MeshBasicMaterial({
-        color: color,
-        side: THREE.DoubleSide
+  
+    const ringGeo = new THREE.RingGeometry(size - 0.1, size + 0.1, 500);  // Increase outer radius for thickness
+  
+    const ringMat = new THREE.MeshPhongMaterial({
+      color: color,
+      side: THREE.DoubleSide
     });
-    const ringMesh = new THREE.Mesh(ringGeo, ringMat); // Assign ringMesh
+  
+    const ringMesh = new THREE.Mesh(ringGeo, ringMat);
     obj.add(ringMesh);
+  
     ringMesh.rotation.x = -0.5 * Math.PI;
-    return {ringMesh, obj};
-}
+    return { ringMesh, obj };
+  }
 
 const mercruyOrbit = createOrbit(planetDistances.Mercury, 0xffffff);
 const venusOrbit = createOrbit(planetDistances.Venus, 0xffffff);
@@ -320,22 +310,57 @@ function onClick(event) {
 }
 
 let targetPlanet;
+let tempCamera;
+let tempOrbit;
+let tempScene;
+let composerTemp;
+let tempCameraRenderPass;
 
 function handleCelestialClick(celestial) {
-    console.log("Clicked on planet:", celestial.name);
     planetSelected = true;
     if (targetPlanet) {
         targetPlanet.remove(camera);
     }
     targetPlanet = celestial;
+    
+    tempScene = new THREE.Scene();
+    const clonedCelestial = celestial.clone();
+    tempScene.add(clonedCelestial);
+    clonedCelestial.position.set(0, 0, 0);
+    const ambientLight = new THREE.AmbientLight(0xffffff, 1);
+    tempScene.add(ambientLight);
+    tempScene.background = cubeTextureLoader.load([
+        spaceTexture,
+        spaceTexture,
+        spaceTexture,
+        spaceTexture,
+        spaceTexture,
+        spaceTexture
+    ]);
+    tempScene.backgroundBlurriness = 0.2;
+    tempScene.backgroundIntensity = 0.05;
+    tempScene.add(particles);
 
-    celestial.add(camera);
-    const celestialName = celestial.name
-    camera.position.set(celestialSize[celestialName] + 30, 30, 0); 
-    camera.lookAt(celestial.position);
-    orbit.target = celestial;
-
-    rotationalSpeedVal = 0;
+    tempCamera = new THREE.PerspectiveCamera(
+        45,
+        window.innerWidth / window.innerHeight,
+        0.1,
+        10000
+    );
+    tempOrbit = new OrbitControls(tempCamera, renderer.domElement);
+    tempCamera.position.set(0, 0, 0)
+    tempCamera.position.x += -celestialSize[celestial.name] - 30;
+    tempCamera.lookAt(celestial.position);
+    tempOrbit.update();
+    
+    
+    composerTemp = new EffectComposer(renderer);
+    tempCameraRenderPass = new RenderPass(tempScene, tempCamera);
+    composerTemp.addPass(tempCameraRenderPass);
+    const pixelPassTemp = new RenderPixelatedPass(3, tempScene, tempCamera);
+    composerTemp.addPass(pixelPassTemp);
+    const bloomPassTemp = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight),0.15, 5, 0.1);
+    composerTemp.addPass(bloomPassTemp);
 
     const infoBox = document.createElement('div');
     infoBox.id = 'info-box';
@@ -351,6 +376,13 @@ function handleCelestialClick(celestial) {
 }
 
 function resetView() {
+    tempCamera = null;
+    tempOrbit = null;
+    tempScene = null;
+    composerTemp = null;
+    tempCameraRenderPass = null;
+    scene.add(particles);
+
     planetSelected = false;
     const infoBox = document.getElementById('info-box');
     const resetButton = document.querySelector('button');
@@ -367,14 +399,39 @@ function resetView() {
     orbit.target = new THREE.Vector3(0, 0, 0);
 }
 
-const clock = new THREE.Clock();
+let isCursorHeldDown = false; // Flag to track the state of the cursor
+
+    // Add event listeners for mouse down and up
+    document.addEventListener('mousedown', () => {
+        isCursorHeldDown = true;
+    });
+    
+    document.addEventListener('mouseup', () => {
+        isCursorHeldDown = false;
+    });
+
+
+//POST PROCESSING
+
+const composerMain = new EffectComposer(renderer);
+
+const cameraRenderPass = new RenderPass(scene, camera);
+composerMain.addPass(cameraRenderPass);
+
+
+
+const pixelPass = new RenderPixelatedPass(3, scene, camera);
+composerMain.addPass(pixelPass);
+
+const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight),0.25, 5, 0.1);
+composerMain.addPass(bloomPass);
+
+
 
 
 //ANIMATE
 
 function animate() {
-    uniforms.u_time.value = clock.getElapsedTime();
-
     animateParticles();
 
     // Self-rotation
@@ -403,15 +460,15 @@ function animate() {
     rayCaster.setFromCamera(mousePosition, camera);
     const intersects = rayCaster.intersectObjects(scene.children);
 
-    
-
     if (intersects.length > 0) {
         const intersectedObject = intersects[0].object;
         if (planetSelected) {
             resetHighlight(intersectedObject);
         }
         else{
-            highLight(intersectedObject);
+            if (!isCursorHeldDown){
+                highLight(intersectedObject);
+            }
         }
         if (celestialMesh.includes(intersectedObject)) {
             selectedCelestial = intersectedObject;
@@ -429,12 +486,18 @@ function animate() {
         resetHighlight(uranusRing);
     }
 
+    if (tempCamera){
+        composerTemp.render();
+    }
+    else{
+        //renderer.render(scene, camera);
+        composerMain.render();
+    }
     
-
-    renderer.render(scene, camera);
 }
 
 renderer.setAnimationLoop(animate);
+
 
 window.addEventListener('resize', function() {
     camera.aspect = window.innerWidth / window.innerHeight;
